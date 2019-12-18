@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{CA584072-3987-4647-B81A-E121CFEB64F5}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="DeploymentManager.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="dclDeploymentManager.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="DeploymentManager">
+        <MSBuild Projects="DeploymentManager.dproj"/>
+    </Target>
+    <Target Name="DeploymentManager:Clean">
+        <MSBuild Projects="DeploymentManager.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DeploymentManager:Make">
+        <MSBuild Projects="DeploymentManager.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="dclDeploymentManager">
+        <MSBuild Projects="dclDeploymentManager.dproj"/>
+    </Target>
+    <Target Name="dclDeploymentManager:Clean">
+        <MSBuild Projects="dclDeploymentManager.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="dclDeploymentManager:Make">
+        <MSBuild Projects="dclDeploymentManager.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="DeploymentManager;dclDeploymentManager"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="DeploymentManager:Clean;dclDeploymentManager:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="DeploymentManager:Make;dclDeploymentManager:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

@@ -1,0 +1,24 @@
+AutoUpdate Framework
+-need to minimize configurations required for application
+-Application should have it's GUID embedded as a resource
+-modify the installer to:
+	-register the installation (location) with the update server to get a LocationGUID and record it in the manifest
+	-generate an initial manifest file
+-launcher
+	-launcher must validate manifest file (handle invalid XML files)
+-ClientUpdateService
+	-needs to be modified so one update service instance can update multiple applications (currently expects that it resides in application folder)
+	-installer needs to check to ensure a previous ClientUpdateService instance is not installed, if it is update the config for it
+	-
+-UpdateServer
+The Update Server expects the updates folder to be a subfolder under where it is installed
+The DeploymentManager has an INI setting which must point to the folder used by the UpdateServer	
+-ClientUpdateService needs to be installed in the folder where the EXE to be updated resides and a Manifest file must exist with the following content:
+<Manifest LocationGUID="{1145FC6F-6046-49B7-9FE1-008140859052}" ApplicationGUID="" UpdateVersion="0.0.0.0" WhatsNew="Initial Manifest Created" IsMandatory="false" IsSilent="false" IsImmediate="false"><Item FileName="CAT.EXE" Version="0.0.0.0" TargetPath="E:\Data\v4\IRAS\Platform\win64\debug"/></Manifest>
+
+-the locationGUID is the StudioGUID for the current studio
+
+
+
+
+The Launcher needs to have Admin rights in order to apply updates and copy/move files and folder in the installation folder

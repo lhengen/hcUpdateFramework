@@ -1,0 +1,25 @@
+﻿	<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+		<Import Condition="Exists('$(BDS)\bin\CodeGear.Deployment.targets')" Project="$(BDS)\bin\CodeGear.Deployment.targets"/>
+		<ProjectExtensions>
+			<ProjectFileVersion>12</ProjectFileVersion>
+		</ProjectExtensions>
+		<ItemGroup Condition="'$(Platform)'=='Win64'"/>
+		<ItemGroup Condition="'$(Platform)'=='OSX32'"/>
+		<ItemGroup Condition="'$(Platform)'=='Win32'">
+			<DeployFile Condition="'$(Config)'=='Debug'" Include="..\..\Studio3\Bin\Launcher.rsm">
+				<RemoteDir>c:\Program Files\Fabutan\Studio\</RemoteDir>
+				<RemoteName>Launcher.rsm</RemoteName>
+				<Operation>0</Operation>
+				<LocalCommand/>
+				<RemoteCommand/>
+			</DeployFile>
+			<DeployFile Condition="'$(Config)'=='Debug'" Include="..\..\Studio3\Bin\Launcher.exe">
+				<RemoteDir>c:\Program Files\Fabutan\Studio\</RemoteDir>
+				<RemoteName>Launcher.exe</RemoteName>
+				<Operation>0</Operation>
+				<LocalCommand/>
+				<RemoteCommand/>
+				<Required>True</Required>
+			</DeployFile>
+		</ItemGroup>
+	</Project>

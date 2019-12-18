@@ -1,0 +1,60 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{3965C8B7-5285-4EBB-A2AB-5E8F820CD4F5}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="WinUI\UpdateWinUIServer.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="ISAPI\UpdateISAPIService.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="NTService\UpdateNTService.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="UpdateWinUIServer">
+        <MSBuild Projects="WinUI\UpdateWinUIServer.dproj"/>
+    </Target>
+    <Target Name="UpdateWinUIServer:Clean">
+        <MSBuild Projects="WinUI\UpdateWinUIServer.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="UpdateWinUIServer:Make">
+        <MSBuild Projects="WinUI\UpdateWinUIServer.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="UpdateISAPIService">
+        <MSBuild Projects="ISAPI\UpdateISAPIService.dproj"/>
+    </Target>
+    <Target Name="UpdateISAPIService:Clean">
+        <MSBuild Projects="ISAPI\UpdateISAPIService.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="UpdateISAPIService:Make">
+        <MSBuild Projects="ISAPI\UpdateISAPIService.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="UpdateNTService">
+        <MSBuild Projects="NTService\UpdateNTService.dproj"/>
+    </Target>
+    <Target Name="UpdateNTService:Clean">
+        <MSBuild Projects="NTService\UpdateNTService.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="UpdateNTService:Make">
+        <MSBuild Projects="NTService\UpdateNTService.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="UpdateWinUIServer;UpdateISAPIService;UpdateNTService"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="UpdateWinUIServer:Clean;UpdateISAPIService:Clean;UpdateNTService:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="UpdateWinUIServer:Make;UpdateISAPIService:Make;UpdateNTService:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
