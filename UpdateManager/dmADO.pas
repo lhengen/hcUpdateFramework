@@ -30,7 +30,7 @@ type
     FDefaultSourceFolder :string;
     FUpdateServerPath :string;
     FDataSource :string;
-    procedure LoadFabWareConfig;
+    procedure LoadConfig;
   public
     procedure OpenWareHouseConnection;
     procedure LoadRegisteredApplications(Items: TStrings);
@@ -58,7 +58,7 @@ uses
 
 procedure TdtmADO.DataModuleCreate(Sender: TObject);
 begin
-  LoadFabWareConfig;
+  LoadConfig;
   OpenWareHouseConnection;
 end;
 
@@ -71,16 +71,9 @@ begin
   {$else}
   sConnection := 'Provider=SQLOLEDB.1;';
   {$endif}
-  {$ifdef FABUTAN}
-  sConnection := sConnection + 'User ID=studio;';
-  sConnection := sConnection + 'Password=b58e#j*3puL!;';
-  sConnection := sConnection + 'Persist Security Info=True;';
-  sConnection := sConnection + 'Initial Catalog=FabWareHouse;';
-  {$else}
   sConnection := sConnection + 'Integrated Security=SSPI;';
   sConnection := sConnection + 'Persist Security Info=False;';
   sConnection := sConnection + 'Initial Catalog=Deployment;';
-  {$endif}
 
   sConnection := sConnection + 'Data Source='+TRIM(FDataSource);
   cnWareHouse.ConnectionString := sConnection;
@@ -92,7 +85,7 @@ begin
   end;
 end;
 
-procedure TdtmADO.LoadFabWareConfig;
+procedure TdtmADO.LoadConfig;
 const
   ConfigSection :string = 'Config';
   DataSourceIdent :string = 'SQLServerDataSource';
@@ -104,7 +97,7 @@ var
   iniFile :TIniFile;
 begin
   //SET DEFAULT VALUES
-  FDataSource := 'Test2K8\SQL2K8';
+  FDataSource := '.';
   FUpdateServerPath := 'C:\Data\UpdateFramework\Server\Win32\Debug\';
   FDefaultSourceFolder := 'C:\Data\Studio3\bin';
 
@@ -141,12 +134,6 @@ var
   aQuery: IhcQuery;
 begin
   Items.Clear;
-  {$ifdef FABUTAN}
-  anApp := TRegisteredApp.Create;
-  anApp.Name := 'anApp';
-  anApp.GUID := '{a58d27a4-e7f3-4ae8-a9ac-6c90c29c05d1}'; //anAppApplicationGUID;
-  Items.AddObject(anApp.Name,anApp);
-  {$else}
   aQuery := hcFactoryPool.CreateQuery;
   aQuery.SQL.Text := 'select ApplicationGUID,ApplicationName from Application order by ApplicationName ASC';
   aQuery.Open;
@@ -164,7 +151,6 @@ begin
     Items.AddObject(anApp.Name,anApp);
     aQuery.Next;
   end;
-  {$endif}
 end;
 
 end.
