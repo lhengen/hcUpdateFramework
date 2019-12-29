@@ -32,7 +32,7 @@ type
     FDataSource :string;
     procedure LoadConfig;
   public
-    procedure OpenWareHouseConnection;
+    procedure OpenDeploymentDatabase;
     procedure LoadRegisteredApplications(Items: TStrings);
     property UpdateServerPath :string read FUpdateServerPath;
     property DataSource :string read FDataSource;
@@ -59,10 +59,10 @@ uses
 procedure TdtmADO.DataModuleCreate(Sender: TObject);
 begin
   LoadConfig;
-  OpenWareHouseConnection;
+  OpenDeploymentDatabase;
 end;
 
-procedure TdtmADO.OpenWareHouseConnection;
+procedure TdtmADO.OpenDeploymentDatabase;
 var
   sConnection: string;
 begin
