@@ -9,7 +9,7 @@ uses
   cxStyles, cxCustomData, cxFilter, cxData, cxDataStorage, cxEdit, DB, cxDBData, cxGridLevel,
   cxClasses, cxGridCustomView, cxGridCustomTableView, cxGridTableView, cxGridDBTableView, cxGrid,
   ADODB, cxMemo, cxCheckBox, hcDeployment, cxBlobEdit, Vcl.ExtCtrls, Vcl.Buttons,
-  cxNavigator, System.ImageList, System.Actions, dxDateRanges;
+  cxNavigator, System.ImageList, System.Actions, dxDateRanges, dxScrollbarAnnotations;
 
 type
   TfrmMain = class(TForm)
@@ -111,7 +111,7 @@ implementation
 
 uses
   dmADO, hcQueryIntf, hcCodesiteHelper, fmAbout, fmDeployment,
-  hcTypes, fmSelectStudios, ftUpdateConsts, hcObjectList, System.IOUtils,
+  hcTypes, fmSelectStudios, hcUpdateConsts, hcObjectList, System.IOUtils,
   System.UITypes, fmEditNotes, Xml.XMLDoc, Xml.XMLIntf;
 
 {$R *.dfm}

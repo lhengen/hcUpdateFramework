@@ -51,7 +51,7 @@ uses
   ,Dialogs
   ,Controls
   ,hcCodeSiteHelper
-  ,Windows, ftUpdateConsts, IniFiles, hcQueryIntf
+  ,Windows, hcUpdateConsts, IniFiles, hcQueryIntf
   ;
 
 {$R *.dfm}
@@ -87,8 +87,8 @@ begin
   try
     cnWareHouse.Open;
   except
-      Forms.Application.ProcessMessages;
-      MessageDlg('There was an error opening the WareHouse database. You will not be able to tan Global clients or allocate KeyTags.', mtError, [mbOk], 0);
+    Forms.Application.ProcessMessages;
+    MessageDlg('There was an error opening the WareHouse database. You will not be able to tan Global clients or allocate KeyTags.', mtError, [mbOk], 0);
   end;
 end;
 

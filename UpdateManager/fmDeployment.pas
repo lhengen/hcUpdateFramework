@@ -60,7 +60,7 @@ uses
   ,hcMemoMediator
   ,hcLabeledEditMediator
   ,hcTypes
-  ,hcDevExpressMediators, hcObserverIntf, ftUpdateConsts
+  ,hcDevExpressMediators, hcObserverIntf, hcUpdateConsts
   ,hcRichEditMediator
   ;
 

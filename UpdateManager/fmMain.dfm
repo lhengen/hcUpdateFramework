@@ -23,6 +23,7 @@ object frmMain: TfrmMain
     Left = 0
     Top = 0
     Width = 833
+    Height = 29
     Margins.Left = 1
     Margins.Top = 1
     Margins.Right = 1
@@ -56,7 +57,7 @@ object frmMain: TfrmMain
       Left = 98
       Top = 0
       Width = 145
-      Height = 21
+      Height = 30
       Anchors = []
       TabOrder = 1
       Text = 'cbApps'
@@ -82,7 +83,7 @@ object frmMain: TfrmMain
       Left = 321
       Top = 0
       Width = 145
-      Height = 21
+      Height = 30
       Anchors = []
       TabOrder = 0
       Text = 'cbUpdates'
@@ -152,6 +153,7 @@ object frmMain: TfrmMain
     object tvGrid1DBTableView1: TcxGridDBTableView
       PopupMenu = pmDeploymentItem
       Navigator.Buttons.CustomButtons = <>
+      ScrollbarAnnotations.CustomAnnotations = <>
       DataController.DataSource = dsDeployments
       DataController.Summary.DefaultGroupSummaryItems = <
         item
