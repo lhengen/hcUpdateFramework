@@ -57,23 +57,16 @@ begin
   {$else}
   sConnection := 'Provider=SQLOLEDB.1;';
   {$endif}
-  {$ifdef FABUTAN}
-  sConnection := sConnection + 'User ID=studio;';
-  sConnection := sConnection + 'Password=b58e#j*3puL!;';
-  sConnection := sConnection + 'Persist Security Info=True;';
-  sConnection := sConnection + 'Initial Catalog=FabWareHouse;';
-  {$ELSE}
   sConnection := sConnection + 'Integrated Security=SSPI;';
   sConnection := sConnection + 'Persist Security Info=False;';
   sConnection := sConnection + 'Initial Catalog=Deployment;';
-  {$ENDIF}
   sConnection := sConnection + 'Data Source='+TRIM(FDataSource);
   cnDeployment.ConnectionString := sConnection;
   try
     cnDeployment.Open;
   except
     Forms.Application.ProcessMessages;
-    MessageDlg('There was an error opening the WareHouse database. You will not be able to tan Global clients or allocate KeyTags.', mtError, [mbOk], 0);
+    MessageDlg('There was an error opening the database.', mtError, [mbOk], 0);
   end;
 end;
 
