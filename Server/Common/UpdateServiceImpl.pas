@@ -4,12 +4,22 @@ unit UpdateServiceImpl;
 
 interface
 
-uses Soap.InvokeRegistry, System.Types, Soap.XSBuiltIns, UpdateServiceIntf, dmADO;
+uses Soap.InvokeRegistry, System.Types, Soap.XSBuiltIns, UpdateServiceIntf
+  {$ifdef Firebird}
+  ,dmFireDAC
+  {$else}
+  ,dmADO
+  {$endif}
+  ;
 
 type
   ApplicationUpdateService = class(TInvokableClass, IUpdateService)
   private
+    {$ifdef Firebird}
+    FDataModule :TdtmFireDAC;
+    {$else}
     FDataModule :TdtmADO;
+    {$endif}
     function GetUpdate(const ApplicationGUID, LocationGUID, Manifest: string): ApplicationUpdateResult; stdcall;
     procedure UpdateReceived(const ApplicationGUID, LocationGUID, UpdateVersion: string); stdcall;
     procedure UpdateApplied(const ApplicationGUID, LocationGUID, UpdateVersion, UpdateResult, UpdateLog: string); stdcall;
@@ -28,7 +38,11 @@ procedure ApplicationUpdateService.AfterConstruction;
 begin
   inherited;
   CoInitialize(nil);
+  {$ifdef Firebird}
+  FDataModule := TdtmFireDAC.Create(nil);
+  {$else}
   FDataModule := TdtmADO.Create(nil);
+  {$endif}
 end;
 
 procedure ApplicationUpdateService.BeforeDestruction;
@@ -42,13 +56,29 @@ function ApplicationUpdateService.GetUpdate(const ApplicationGUID, LocationGUID,
 const
   //if multiple updates are available when the request is made send the first available one
   CheckForUpdateSQL :string =
-  'SELECT top 1 d.UpdateVersion, d.WhatsNew, IsAvailable,AvailableUTCDate,UpdatedUTCDate,LastAttemptUTCDate, '+
-  'UpdateResult,UpdateLog, l.Description as LocationName, IsMandatory, IsSilent, IsImmediate '+
-  'FROM LocationDeployment ld ' +
-  'inner join Deployment d on d.DeploymentGUID = ld.DeploymentGUID ' +
-  'inner join Location l on l.LocationGUID = ld.LocationGUID '+
-  'where ld.LocationGUID = ''%s'' and d.ApplicationGUID = ''%s'' and ReceivedUTCDate IS NULL and IsAvailable = 1 and getutcdate() > AvailableUTCDate '+
-  'order by AvailableUTCDate ASC ';
+    'SELECT %0:s 1 '+
+    'd.UpdateVersion, '+
+    'd.WhatsNew, '+
+    'IsAvailable, '+
+    'AvailableUTCDate, '+
+    'UpdatedUTCDate, '+
+    'LastAttemptUTCDate, '+
+    'UpdateResult, '+
+    'UpdateLog, '+
+    'l.Description as LocationName, '+
+    'IsMandatory, '+
+    'IsSilent, '+
+    'IsImmediate '+
+    'FROM LocationDeployment ld '+
+    'inner join Deployment d on d.DeploymentGUID = ld.DeploymentGUID '+
+    'inner join Location l on l.LocationGUID = ld.LocationGUID '+
+    'where ld.LocationGUID = %1:s '+
+    'and d.ApplicationGUID = %2:s '+
+    'and ReceivedUTCDate IS NULL '+
+    'and IsAvailable = %3:s '+
+    'and %4:s > AvailableUTCDate '+
+    'order by AvailableUTCDate ASC';
+
 var
   i :Integer;
   TempArray :ArrayOfApplicationManifestEntry;
@@ -63,7 +93,11 @@ begin
   try
     with FDataModule.qryWorker do
     begin
-      SQL.Text := format(CheckForUpdateSQL,[LocationGUID,ApplicationGUID]);
+      {$ifdef Firebird}
+      SQL.Text := format(CheckForUpdateSQL,['first',Format('CHAR_TO_UUID(''%s'')',[LocationGUID]),Format('CHAR_TO_UUID(''%s'')',[ApplicationGUID]),'True','CURRENT_TIMESTAMP']); //TODO - change to use utc
+      {$else}
+      SQL.Text := format(CheckForUpdateSQL,['top',AnsiQuotedStr(LocationGUID,''''),AnsiQuotedStr(ApplicationGUID,''''),'1','getutcdate()']);
+      {$endif}
       Open;
       try
         if EOF then
@@ -93,11 +127,6 @@ begin
           Result.NewManifest.IsMandatory := FieldByName('IsMandatory').AsBoolean;
           Result.NewManifest.IsSilent := FieldByName('IsSilent').AsBoolean;
           Result.NewManifest.IsImmediate := FieldByName('IsImmediate').AsBoolean;
-
-          {$ifdef FABUTAN}
-          Result.NewManifest.SyncProgrammability := FieldByName('SyncProgrammability').AsBoolean;
-          Result.NewManifest.SyncData := FieldByName('SyncData').AsBoolean;
-          {$endif}
 
           //add manifest entries
           //get the manifest from the file system based on the UpdateVersion
@@ -134,7 +163,12 @@ begin
                 TempArray[I].FileData := FileToByteArray(UpdateDirectory + sPatchFileName);
               end
               else
+              begin
+                if not FileExists(UpdateDirectory + TempArray[I].FileName) then
+                  raise Exception.CreateFmt('File Not present on Update Server: %s%s',[UpdateDirectory,TempArray[I].FileName]);
+
                 TempArray[I].FileData := FileToByteArray(UpdateDirectory + TempArray[I].FileName);
+              end;
             end;
           finally
             XMLDoc := nil;
@@ -154,15 +188,19 @@ end;
 procedure ApplicationUpdateService.UpdateApplied(const ApplicationGUID, LocationGUID, UpdateVersion, UpdateResult, UpdateLog: string);
 const
   UpdateAppliedSQL :string =
-    'update LocationDeployment set UpdatedUTCDate = GETUTCDATE(), LastAttemptUTCDate = GETUTCDATE(), UpdateResult = ''%s'', UpdateLog = ''%s'' '+
-    'where LocationGUID = ''%s'' and DeploymentGUID = (select DeploymentGUID from Deployment where '+
-    ' ApplicationGUID = ''%s'' and Status = ''Active'' and [UpdateVersion] = ''%s'')';
+    'update LocationDeployment set UpdatedUTCDate = %0:s, LastAttemptUTCDate = %0:s, UpdateResult = ''%1:s'', UpdateLog = ''%2:s'' '+
+    'where LocationGUID = %3:s and DeploymentGUID = (select DeploymentGUID from Deployment where '+
+    ' ApplicationGUID = %4:s and Status = ''Active'' and UpdateVersion = ''%5:s'')';
 begin
   FDataModule.cnDeployment.Connected := True;
   try
     with FDataModule.qryWorker do
     begin
-      SQL.Text := format(UpdateAppliedSQL,[UpdateResult,UpdateLog,LocationGUID,ApplicationGUID,UpDateVersion]);
+      {$ifdef Firebird}
+      SQL.Text := format(UpdateAppliedSQL,['current_timestamp',UpdateResult,UpdateLog,Format('CHAR_TO_UUID(''%s'')',[LocationGUID]),Format('CHAR_TO_UUID(''%s'')',[ApplicationGUID]),UpDateVersion]); //todo - change to use utc
+      {$else}
+      SQL.Text := format(UpdateAppliedSQL,['getutcdate()',UpdateResult,UpdateLog,LocationGUID,ApplicationGUID,UpDateVersion]);
+      {$endif}
       ExecSQL;
     end;
   finally
@@ -173,15 +211,19 @@ end;
 procedure ApplicationUpdateService.UpdateReceived(const ApplicationGUID, LocationGUID, UpdateVersion: string);
 const
   UpdateAppliedSQL :string =
-    'update LocationDeployment set ReceivedUTCDate = GETUTCDATE() '+
-    'where LocationGUID = ''%s'' and DeploymentGUID = (select DeploymentGUID from Deployment where '+
-    ' ApplicationGUID = ''%s'' and Status = ''Active'' and [UpdateVersion] = ''%s'')';
+    'update LocationDeployment set ReceivedUTCDate = %0:s '+
+    'where LocationGUID = %1:s and DeploymentGUID = (select DeploymentGUID from Deployment where '+
+    ' ApplicationGUID = %2:s and Status = ''Active'' and UpdateVersion = ''%3:s'')';
 begin
   FDataModule.cnDeployment.Connected := True;
   try
     with FDataModule.qryWorker do
     begin
-      SQL.Text := format(UpdateAppliedSQL,[LocationGUID,ApplicationGUID,UpdateVersion]);
+      {$ifdef Firebird}
+      SQL.Text := format(UpdateAppliedSQL,['current_timestamp',Format('CHAR_TO_UUID(''%s'')',[LocationGUID]),Format('CHAR_TO_UUID(''%s'')',[ApplicationGUID]),UpdateVersion]); //todo - change to use utc
+      {$else}
+      SQL.Text := format(UpdateAppliedSQL,['getutcdate()',LocationGUID,ApplicationGUID,UpdateVersion]);
+      {$endif}
       ExecSQL;
     end;
   finally

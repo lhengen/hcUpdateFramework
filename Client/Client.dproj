@@ -84,15 +84,16 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
-        <DCCReference Include="Unit1.pas">
-            <Form>frmMain</Form>
-        </DCCReference>
         <DCCReference Include="..\Common\unWebServiceFileUtils.pas"/>
         <DCCReference Include="..\Common\unUpdateClient.pas"/>
         <DCCReference Include="..\Common\unPath.pas"/>
         <DCCReference Include="..\Common\unIUpdateService.pas"/>
         <DCCReference Include="..\Common\hcUpdateConsts.pas"/>
         <DCCReference Include="..\Common\hcVersionText.pas"/>
+        <DCCReference Include="fmMain.pas">
+            <Form>frmMain</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
@@ -1034,3 +1035,11 @@
     </ProjectExtensions>
     <Import Project="$(MSBuildProjectName).deployproj" Condition="Exists('$(MSBuildProjectName).deployproj')"/>
 </Project>
+
+<!-- EurekaLog First Line
+[Exception Log]
+EurekaLog Version=7007
+Activate=0
+DeleteMapAfterCompile=0
+Encrypt Password=""
+EurekaLog Last Line -->

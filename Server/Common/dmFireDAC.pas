@@ -1,0 +1,119 @@
+unit dmFireDAC;
+
+interface
+
+uses
+  SysUtils, Classes, DB, ADODB,
+  IdMessage, IdBaseComponent, IdComponent, IdTCPConnection,
+  IdTCPClient, IdMessageClient, IdSMTP
+  ,midaslib, FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param, FireDAC.Stan.Error,
+  FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf, FireDAC.Stan.Async, FireDAC.DApt,
+  FireDAC.UI.Intf, FireDAC.Stan.Def, FireDAC.Stan.Pool, FireDAC.Phys, FireDAC.Phys.FB,
+  FireDAC.Phys.FBDef, FireDAC.VCLUI.Wait, FireDAC.Comp.Client, hcFireDAC, FireDAC.Comp.DataSet,
+  FireDAC.Moni.Base, FireDAC.Moni.RemoteClient
+  ;
+
+
+type
+  TdtmFireDAC = class(TDataModule)
+    qryWorker: TFDQuery;
+    cnDeployment: ThcFireDACConnection;
+    FDMoniRemoteClientLink1: TFDMoniRemoteClientLink;
+    procedure DataModuleCreate(Sender: TObject);
+  private
+    FDataSource :string;
+    FDefaultPort, //TCP port UpdateService listens on
+    FMaxConcurrentWebRequests :integer;  //how many concurrent web requests we can service
+  public
+    procedure LoadConfig;
+    procedure OpenDBConnection;
+    property DefaultPort :integer read FDefaultPort;
+    property MaxConcurrentWebRequests :integer read FMaxConcurrentWebRequests;
+  end;
+
+var
+  dtmADO: TdtmFireDAC;
+
+implementation
+
+uses
+  Forms
+  ,Dialogs
+  ,Controls
+  ,Windows, System.IniFiles
+  ;
+
+{$R *.dfm}
+
+procedure TdtmFireDAC.DataModuleCreate(Sender: TObject);
+begin
+  //at this point the splash form exists but the global variable for the form is not set
+  LoadConfig;
+  OpenDBConnection;
+end;
+
+
+procedure TdtmFireDAC.OpenDBConnection;
+begin
+  cnDeployment.Params.Clear;
+  cnDeployment.Params.Database := 'C:\Data\SkyStone\Deployment.fdb';
+  cnDeployment.Params.DriverID := 'FB';
+  cnDeployment.Params.UserName := 'sysdba';
+  cnDeployment.Params.Password := 'masterkey';
+  cnDeployment.Params.Add('lc_ctype=WIN1252');
+  {$ifdef DEBUG}
+  cnDeployment.Params.Add('MonitorBy=Remote');
+  {$endif}
+  try
+    cnDeployment.Open;
+  except
+    Forms.Application.ProcessMessages;
+    MessageDlg('There was an error opening the database.', mtError, [mbOk], 0);
+  end;
+end;
+
+procedure TdtmFireDAC.LoadConfig;
+const
+  ConfigSection :string = 'Config';
+  DataSourceIdent    :string = 'SQLServerDataSource';
+  MaxConcurrentWebRequestsIdent :string = 'MaxConcurrentWebRequests';
+  DefaultPortIdent :string = 'ListeningPort';
+
+var
+  sFileName :TFileName;
+  iniFile :TIniFile;
+
+begin
+  sFileName := ChangeFileExt(Application.ExeName,'.ini');
+  //SET DEFAULT VALUES
+  FDataSource := '.';
+  FMaxConcurrentWebRequests := 32;
+  FDefaultPort := 8080;
+
+  if FileExists(sFileName) then
+  begin
+    iniFile := TIniFile.Create(sFileName);
+    try
+      FDataSource := iniFile.ReadString(ConfigSection,DataSourceIdent,FDataSource);
+      FMaxConcurrentWebRequests := iniFile.ReadInteger(ConfigSection,MaxConcurrentWebRequestsIdent,FMaxConcurrentWebRequests);
+      FDefaultPort := iniFile.ReadInteger(ConfigSection,DefaultPortIdent,FDefaultPort);
+    finally
+      iniFile.Free
+    end;
+  end
+  else
+  begin
+    iniFile := TIniFile.Create(sFileName);
+    try
+      iniFile.WriteString(ConfigSection,DataSourceIdent,FDataSource);
+      iniFile.WriteInteger(ConfigSection,MaxConcurrentWebRequestsIdent,FMaxConcurrentWebRequests);
+      iniFile.WriteInteger(ConfigSection,DefaultPortIdent,FDefaultPort);
+      iniFile.UpdateFile;
+    finally
+      iniFile.Free
+    end;
+    MessageDlg(Format('%s Configuration File Does NOT Exist. '#13#10'Defaults will be used.',[sFileName,Application.Title]), mtWarning, [mbOk], 0);
+  end;
+end;
+
+end.

@@ -37,10 +37,6 @@ type
 
   ApplicationManifest = class(TRemotable)
   private
-    {$ifdef FABUTAN}
-    FSyncProgrammability,
-    FSyncData,
-    {$ENDIF}
     FIsMandatory,
     FIsSilent,
     FIsImmediate :boolean;
@@ -58,10 +54,6 @@ type
 		property IsMandatory :boolean read FIsMandatory write FIsMandatory;
 		property IsSilent :boolean read FIsSilent write FIsSilent;
 		property IsImmediate :boolean read FIsImmediate write FIsImmediate;
-    {$ifdef FABUTAN}
-		property SyncProgrammability :boolean read FSyncProgrammability write FSyncProgrammability;
-		property SyncData :boolean read FSyncData write FSyncData;
-    {$endif}
   end;
 
   ApplicationUpdateResult = class(TRemotable)

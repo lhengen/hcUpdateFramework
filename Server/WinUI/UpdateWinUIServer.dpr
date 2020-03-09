@@ -18,7 +18,8 @@ uses
   Vcl.Themes,
   Vcl.Styles,
   FileCache in '..\Common\FileCache.pas',
-  hcUpdateConsts in '..\..\Common\hcUpdateConsts.pas';
+  hcUpdateConsts in '..\..\Common\hcUpdateConsts.pas',
+  dmFireDAC in '..\Common\dmFireDAC.pas';
 
 {$R *.res}
 
