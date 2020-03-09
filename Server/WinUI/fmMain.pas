@@ -6,11 +6,11 @@ uses Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
   System.Classes, Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs,
   Vcl.AppEvnts, Vcl.StdCtrls, IdHTTPWebBrokerBridge, Web.HTTPApp, Vcl.ActnList,
   Vcl.Samples.Spin, System.Actions
-//  {$ifdef Firebird}
-//  ,dmFireDAC
-//  {$else}
-//  ,dmADO
-//  {$endif}
+  {$ifdef Firebird}
+  ,dmFireDAC
+  {$else}
+  ,dmADO
+  {$endif}
   ;
 
 type
@@ -35,11 +35,11 @@ type
     procedure actStopExecute(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
   private
-//    {$ifdef Firebird}
-//    FDataModule :TdtmFireDAC;
-//    {$else}
-//    FDataModule :TdtmADO;
-//    {$endif}
+    {$ifdef Firebird}
+    FDataModule :TdtmFireDAC;
+    {$else}
+    FDataModule :TdtmADO;
+    {$endif}
     FServer: TIdHTTPWebBrokerBridge;
     procedure StartServer;
   public
@@ -102,21 +102,23 @@ end;
 
 procedure TfrmMain.FormCreate(Sender: TObject);
 begin
-//  CoInitialize(nil);
-//  //we don't use anything here other than the setting, but it's best to connect to the database when starting than wait until we receive the first request before we fail if cannot connect to DB
-//  {$ifdef Firebird}
-//  FDataModule := TdtmFireDAC.Create(Self);
-//  {$else}
-//  FDataModule := TdtmADO.Create(Self);
-//  {$endif}
+  //TODO - load server config without creating datamodule
+  CoInitialize(nil);
+  //we don't use anything here other than the setting, but it's best to connect to the database when starting than wait until we receive the first request before we fail if cannot connect to DB
+  {$ifdef Firebird}
+  FDataModule := TdtmFireDAC.Create(nil);
+  {$else}
+  FDataModule := TdtmADO.Create(nil);
+  {$endif}
+  try
+    seMaxConnections.Value := FDataModule.MaxConcurrentWebRequests;
+    EditPort.Text := IntToStr(FDataModule.DefaultPort);
+  finally
+    FDatamodule.Free;
+  end;
 
 
   FServer := TIdHTTPWebBrokerBridge.Create(Self);
-  EditPort.Text := IntToStr(FServer.DefaultPort);
-  seMaxConnections.Value := WebRequestHandler.MaxConnections;
-
-//  seMaxConnections.Value := FDataModule.MaxConcurrentWebRequests;
-//  EditPort.Text := IntToStr(FDataModule.DefaultPort);
 end;
 
 procedure TfrmMain.StartServer;

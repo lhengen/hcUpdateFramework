@@ -21,7 +21,9 @@ type
     FDMoniRemoteClientLink1: TFDMoniRemoteClientLink;
     procedure DataModuleCreate(Sender: TObject);
   private
-    FDataSource :string;
+    FDatabasePath :string;
+    FUserName :string;
+    FPassword :string;
     FDefaultPort, //TCP port UpdateService listens on
     FMaxConcurrentWebRequests :integer;  //how many concurrent web requests we can service
   public
@@ -56,10 +58,10 @@ end;
 procedure TdtmFireDAC.OpenDBConnection;
 begin
   cnDeployment.Params.Clear;
-  cnDeployment.Params.Database := 'C:\Data\SkyStone\Deployment.fdb';
+  cnDeployment.Params.Database := FDatabasePath;
   cnDeployment.Params.DriverID := 'FB';
-  cnDeployment.Params.UserName := 'sysdba';
-  cnDeployment.Params.Password := 'masterkey';
+  cnDeployment.Params.UserName := FUserName;
+  cnDeployment.Params.Password := FPassword;
   cnDeployment.Params.Add('lc_ctype=WIN1252');
   {$ifdef DEBUG}
   cnDeployment.Params.Add('MonitorBy=Remote');
@@ -75,9 +77,11 @@ end;
 procedure TdtmFireDAC.LoadConfig;
 const
   ConfigSection :string = 'Config';
-  DataSourceIdent    :string = 'SQLServerDataSource';
   MaxConcurrentWebRequestsIdent :string = 'MaxConcurrentWebRequests';
   DefaultPortIdent :string = 'ListeningPort';
+  DatabaseFileNameIdent :string = 'DatabaseFileName';
+  UserNameIdent :string = 'UserName';
+  PasswordIdent :string = 'Password';
 
 var
   sFileName :TFileName;
@@ -86,7 +90,9 @@ var
 begin
   sFileName := ChangeFileExt(Application.ExeName,'.ini');
   //SET DEFAULT VALUES
-  FDataSource := '.';
+  FDatabasePath := 'C:\Data\SkyStone\Deployment.fdb';
+  FUserName := 'sysdba';
+  FPassword := 'masterkey';
   FMaxConcurrentWebRequests := 32;
   FDefaultPort := 8080;
 
@@ -94,9 +100,11 @@ begin
   begin
     iniFile := TIniFile.Create(sFileName);
     try
-      FDataSource := iniFile.ReadString(ConfigSection,DataSourceIdent,FDataSource);
       FMaxConcurrentWebRequests := iniFile.ReadInteger(ConfigSection,MaxConcurrentWebRequestsIdent,FMaxConcurrentWebRequests);
       FDefaultPort := iniFile.ReadInteger(ConfigSection,DefaultPortIdent,FDefaultPort);
+      FDatabasePath := iniFile.ReadString(ConfigSection,DatabaseFileNameIdent,FDatabasePath);
+      FUserName := iniFile.ReadString(ConfigSection,UserNameIdent,FUserName);
+      FPassword := iniFile.ReadString(ConfigSection,PasswordIdent,FPassword);
     finally
       iniFile.Free
     end;
@@ -105,9 +113,11 @@ begin
   begin
     iniFile := TIniFile.Create(sFileName);
     try
-      iniFile.WriteString(ConfigSection,DataSourceIdent,FDataSource);
       iniFile.WriteInteger(ConfigSection,MaxConcurrentWebRequestsIdent,FMaxConcurrentWebRequests);
       iniFile.WriteInteger(ConfigSection,DefaultPortIdent,FDefaultPort);
+      iniFile.WriteString(ConfigSection,DatabaseFileNameIdent,FDatabasePath);
+      iniFile.WriteString(ConfigSection,UserNameIdent,FUserName);
+      iniFile.WriteString(ConfigSection,PasswordIdent,FPassword);
       iniFile.UpdateFile;
     finally
       iniFile.Free
