@@ -8,7 +8,8 @@ uses
   unIUpdateService in '..\Common\unIUpdateService.pas',
   hcUpdateConsts in '..\Common\hcUpdateConsts.pas',
   hcVersionText in '..\Common\hcVersionText.pas',
-  fmMain in 'fmMain.pas' {frmMain};
+  fmMain in 'fmMain.pas' {frmMain},
+  hcUpdateSettings in '..\Common\hcUpdateSettings.pas';
 
 {$R *.res}
 

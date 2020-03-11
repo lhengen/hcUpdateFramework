@@ -24,7 +24,7 @@ var
 implementation
 
 uses
-  unUpdateClient, IniFiles, Winapi.ShellAPI;
+  unUpdateClient, IniFiles, Winapi.ShellAPI, hcUpdateSettings;
 
 
 {$R *.dfm}
@@ -47,37 +47,8 @@ begin
 end;
 
 procedure TfrmMain.FormCreate(Sender: TObject);
-const
-  ConfigSection :string = 'Config';
-  PollingIntervalInMinutesIdent :string = 'PollingIntervalinMinutes';
-  UpdateServiceURIIdent :string = 'UpdateServiceURI';
-var
-  sFileName :string;
-  iniFile :TiniFile;
 begin
-  FURI :=  'http://localhost:8080/soap/IUpdateService';
-
-  sFileName := ChangeFileExt(Application.ExeName,'.ini');
-  if FileExists(sFileName) then
-  begin
-    iniFile := TIniFile.Create(sFileName);
-    try
-      FURI := iniFile.ReadString(ConfigSection,UpdateServiceURIIdent,FURI);
-    finally
-      iniFile.Free
-    end;
-  end
-  else
-  begin
-    iniFile := TIniFile.Create(sFileName);
-    try
-      iniFile.WriteString(ConfigSection,UpdateServiceURIIdent,FURI);
-      iniFile.UpdateFile;
-    finally
-      iniFile.Free
-    end;
-  end;
-  laUpdateServerURI.Caption := FURI;
+  laUpdateServerURI.Caption := AutoUpdateSettings.WebServiceURI;
 end;
 
 end.

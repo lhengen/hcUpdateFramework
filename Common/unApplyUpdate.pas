@@ -72,10 +72,6 @@ uses
   ,hcUpdateConsts
   ,ActiveX
   ,System.Zip
-  {$ifdef FABUTAN}
-  ,ftSyncClient,
-  {$endif}
-
   ;
 
 function ThcUpdateApplier.MoveDir(const fromDir, toDir: string): Boolean;
@@ -248,10 +244,6 @@ begin
         iRootNode := XMLDoc.ChildNodes.First;
         LocationGUID := iRootNode.Attributes['LocationGUID'];
         ApplicationGUID := iRootNode.Attributes['ApplicationGUID'];
-        {$ifdef FABUTAN}
-        SyncProgrammability := StrToBool(iRootNode.Attributes['SyncProgrammability']);
-        SyncData := StrToBool(iRootNode.Attributes['SyncData']);
-        {$endif}
 
         //if the INI file says we're to apply silent updates then proceed otherwise
         //log that we're ignoring the update and exit
@@ -408,28 +400,6 @@ begin
       Progress.Add(Format('Moving %s to %s',[sTempDirName,AppliedDir]));
       if not MoveDir(sTempDirName,AppliedDir) then
          raise Exception.Create(Format('Unable to Move %s to Applied folder',[sTempDirName]));
-
-      {$ifdef FABUTAN}
-      if SyncProgrammability then
-      begin
-        SyncClient := TftSyncClient.Create(nil);
-        try
-          SyncClient.SyncProgrammability(60000)
-        finally
-          SyncClient.Free;
-        end;
-      end;
-
-      if SyncData then
-      begin
-        SyncClient := TftSyncClient.Create(nil);
-        try
-          SyncClient.SyncData(60000)
-        finally
-          SyncClient.Free;
-        end;
-      end;
-      {$endif}
 
       //tell the UpdateServer we applied the update
       UpdateResult := UpdateResultNames[urSuccess];

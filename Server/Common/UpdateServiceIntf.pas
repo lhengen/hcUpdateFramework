@@ -56,6 +56,7 @@ type
 		property IsImmediate :boolean read FIsImmediate write FIsImmediate;
   end;
 
+
   ApplicationUpdateResult = class(TRemotable)
   private
     FUpdateIsAvailable :Boolean;
@@ -77,6 +78,7 @@ type
     function GetUpdate(const ApplicationGUID, LocationGUID, Manifest: string): ApplicationUpdateResult; stdcall;
     procedure UpdateReceived(const ApplicationGUID, LocationGUID, UpdateVersion: string); stdcall;
     procedure UpdateApplied(const ApplicationGUID, LocationGUID, UpdateVersion, UpdateResult, UpdateLog: string); stdcall;
+    function RegisterInstall(const ApplicationGUID, DeviceFingerPrint: string) :string; stdcall;  //returns InstallationGUID
   end;
 
 implementation

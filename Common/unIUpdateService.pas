@@ -127,6 +127,7 @@ type
     function  GetUpdate(const ApplicationGUID: string; const LocationGUID: string; const Manifest: string): ApplicationUpdateResult; stdcall;
     procedure UpdateReceived(const ApplicationGUID: string; const LocationGUID: string; const UpdateVersion: string); stdcall;
     procedure UpdateApplied(const ApplicationGUID: string; const LocationGUID: string; const UpdateVersion: string; const UpdateResult: string; const UpdateLog: string); stdcall;
+    function RegisterInstall(const ApplicationGUID, DeviceFingerPrint: string) :string; stdcall;  //returns InstallationGUID
   end;
 
 function GetIUpdateService(UseWSDL: Boolean=System.False; Addr: string=''; HTTPRIO: THTTPRIO = nil): IUpdateService;

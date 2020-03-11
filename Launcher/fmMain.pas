@@ -32,12 +32,6 @@ type
     procedure btOKClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
   private
-    //ini fields
-    FAppDir,
-    FTargetEXE,
-    FUpdateRootDir,
-    FWebServiceURI :string;
-
     FUpdateApplier :ThcUpdateApplier;
     FErrorEncountered :boolean;
     procedure LaunchEXEAndTerminate;
@@ -46,7 +40,6 @@ type
     procedure OnProgressUpdate(Sender: TObject);
     procedure OnPatchProgress(ASender: TObject; const ACurrentPosition,
       AMaximumPosition: LongWord; var ACanContinue: LongBool);
-    procedure LoadINISettings;
   public
   end;
 
@@ -56,12 +49,11 @@ var
 implementation
 
 uses
-  IniFiles
-  ,CodeSiteLogging
+  CodeSiteLogging
+  ,hcUpdateSettings
   ,hcVersionList
   ,ShellAPI
   ,StrUtils
-  ,JvJCLUtils
   ;
 
 {$R *.dfm}
@@ -85,7 +77,6 @@ begin
       sleep(nSecs * 1000);
     end;
   end;
-  LoadINISettings;
   FUpdateApplier := ThcUpdateApplier.Create;
   FUpdateApplier.ApplySilentUpdates := False;  //launcher provides UI for feedback so ignore silent updates
   FUpdateApplier.OnApplyUpdate := OnApplyingUpdate;
@@ -121,7 +112,7 @@ end;
 
 procedure TfrmMain.OnUpdateFailure(UpdateVersion, UpdateErrorMessage: string);
 begin
-  MessageDlg(Format('An error occurred while applying the %s update.  %s may not be usable.  We recommend you contact technical support immediately.',[UpdateVersion,FTargetEXE]),mtError,[mbOK],0);
+  MessageDlg(Format('An error occurred while applying the %s update.  %s may not be usable.  We recommend you contact technical support immediately.',[UpdateVersion,AutoUpdateSettings.TargetEXE]),mtError,[mbOK],0);
   btOK.Caption := 'Close';
 end;
 
@@ -148,65 +139,11 @@ procedure TfrmMain.LaunchEXEAndTerminate;
 var
   FileNameWithPath :string;
 begin
-  FileNameWithPath := FAppDir + FTargetEXE;
+  FileNameWithPath := AutoUpdateSettings.AppDir + AutoUpdateSettings.TargetEXE;
   if not FileExists(FileNameWithPath) then
     MessageDlg(Format('EXE Specified in INI file does not Exist: '#13#10'''%s''',[FileNameWithPath]),mtWarning,[mbOk],0);
-  ShellExecute(Handle, 'open', PWideChar(WideString(FAppDir + FTargetEXE)), nil, nil, SW_SHOWNORMAL) ;
+  ShellExecute(Handle, 'open', PWideChar(WideString(AutoUpdateSettings.AppDir + AutoUpdateSettings.TargetEXE)), nil, nil, SW_SHOWNORMAL) ;
   PostQuitMessage(0);
 end;
-
-procedure TfrmMain.LoadINISettings;
-const
-  ConfigSection :string = 'Config';
-  UpdateRootDirIdent :string = 'UpdateRootDir';
-  AppDirIdent :string = 'AppDir';
-  AppToLaunchIdent :string = 'AppToLaunch';
-  WebServiceURIIdent :string = 'UpdateServiceURI';
-
-var
-  iniFile :TIniFile;
-  sFileName :TFileName;
-
-begin
-  //initialize all settings to their default values
-  FAppDir := IncludeTrailingPathDelimiter(LongToShortPath(ExtractFilePath(Application.ExeName)));
-  FTargetEXE := 'Some.EXE';
-  FUpdateRootDir := IncludeTrailingPathDelimiter(LongToShortPath(Format('%s%s\',[FAppDir,'Updates'])));
-  FWebServiceURI := 'http://localhost:8080/soap/IUpdateService';
-
-  sFileName := ChangeFileExt(Application.ExeName,'.ini');
-  if FileExists(sFileName) then
-  begin
-    iniFile := TIniFile.Create(sFileName);
-    try
-      FUpdateRootDir := iniFile.ReadString(ConfigSection,UpdateRootDirIdent,FUpdateRootDir);
-      FAppDir := iniFile.ReadString(ConfigSection,AppDirIdent,FAppDir);
-      //make sure the Target EXE exists even if the ThcUpdateApplier created the default ini
-      if not iniFile.ValueExists(ConfigSection,AppToLaunchIdent) then
-      begin
-        iniFile.WriteString(ConfigSection,AppToLaunchIdent,FTargetEXE);
-        iniFile.UpdateFile;
-      end;
-      FTargetEXE := iniFile.ReadString(ConfigSection,AppToLaunchIdent,FTargetEXE);
-      FWebServiceURI := iniFile.ReadString(ConfigSection,WebServiceURIIdent,FWebServiceURI);
-    finally
-      iniFile.Free
-    end;
-  end
-  else
-  begin
-    iniFile := TIniFile.Create(sFileName);
-    try
-      iniFile.WriteString(ConfigSection,UpdateRootDirIdent,FUpdateRootDir);
-      iniFile.WriteString(ConfigSection,AppDirIdent,FAppDir);
-      iniFile.WriteString(ConfigSection,AppToLaunchIdent,FTargetEXE);
-      iniFile.WriteString(ConfigSection,WebServiceURIIdent,FWebServiceURI);
-      iniFile.UpdateFile;
-    finally
-      iniFile.Free
-    end;
-  end;
-end;
-
 
 end.

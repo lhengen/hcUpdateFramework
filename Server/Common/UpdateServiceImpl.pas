@@ -23,6 +23,7 @@ type
     function GetUpdate(const ApplicationGUID, LocationGUID, Manifest: string): ApplicationUpdateResult; stdcall;
     procedure UpdateReceived(const ApplicationGUID, LocationGUID, UpdateVersion: string); stdcall;
     procedure UpdateApplied(const ApplicationGUID, LocationGUID, UpdateVersion, UpdateResult, UpdateLog: string); stdcall;
+    function RegisterInstall(const ApplicationGUID, DeviceFingerPrint: string) :string; stdcall;  //returns InstallationGUID
   public
     procedure AfterConstruction; override;
     procedure BeforeDestruction; override;
@@ -179,6 +180,28 @@ begin
       finally
         Close;
       end;
+    end;
+  finally
+    FDataModule.cnDeployment.Connected := False;
+  end;
+end;
+
+function ApplicationUpdateService.RegisterInstall(const ApplicationGUID, DeviceFingerPrint: string) :string; stdcall;  //returns InstallationGUID
+//this is a temporary method to accomodate automatic registration for a specific company's inhouse software
+const
+  CreateLocationSQL :string =
+    'insert into Install (DeviceName, DeviceFingerPrint) values (''%s'' )';
+begin
+  FDataModule.cnDeployment.Connected := True;
+  try
+    with FDataModule.qryWorker do
+    begin
+      {$ifdef Firebird}
+      SQL.Text := format(CreateLocationSQL,['current_timestamp',UpdateResult,UpdateLog,Format('CHAR_TO_UUID(''%s'')',[LocationGUID]),Format('CHAR_TO_UUID(''%s'')',[ApplicationGUID]),UpDateVersion]); //todo - change to use utc
+      {$else}
+      SQL.Text := format(CreateLocationSQL,['getutcdate()',UpdateResult,UpdateLog,LocationGUID,ApplicationGUID,UpDateVersion]);
+      {$endif}
+      ExecSQL;
     end;
   finally
     FDataModule.cnDeployment.Connected := False;

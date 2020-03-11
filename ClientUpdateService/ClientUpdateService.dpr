@@ -15,7 +15,8 @@ uses
   unitDebugService in 'unitDebugService.pas',
   hcUpdateConsts in '..\Common\hcUpdateConsts.pas',
   hcVersionList in '..\Common\hcVersionList.pas',
-  hcVersionText in '..\Common\hcVersionText.pas';
+  hcVersionText in '..\Common\hcVersionText.pas',
+  hcUpdateSettings in '..\Common\hcUpdateSettings.pas';
 
 {$R *.RES}
 

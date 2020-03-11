@@ -8,7 +8,8 @@ uses
   unIUpdateService in '..\Common\unIUpdateService.pas',
   unApplyUpdate in '..\Common\unApplyUpdate.pas',
   hcVersionList in '..\Common\hcVersionList.pas',
-  hcUpdateConsts in '..\Common\hcUpdateConsts.pas';
+  hcUpdateConsts in '..\Common\hcUpdateConsts.pas',
+  hcUpdateSettings in '..\Common\hcUpdateSettings.pas';
 
 {$R *.res}
 
