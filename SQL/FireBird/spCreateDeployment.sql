@@ -34,8 +34,8 @@ BEGIN
            ,:IsMandatory
            );
     
-      	INSERT INTO LOCATIONDEPLOYMENT
-			   (LOCATIONGUID
+      	INSERT INTO INSTALLATIONDEPLOYMENT
+			   (INSTALLATIONGUID
 			   ,DEPLOYMENTGUID
 			   ,ISAVAILABLE
 			   ,AVAILABLEUTCDATE
@@ -45,7 +45,7 @@ BEGIN
 			   ,UPDATELOG
 			   )
 
-			Select LocationGUID 
+			Select INSTALLATIONGUID 
 			,:deploymentGUID
 			,0
 			,NULL
@@ -53,7 +53,7 @@ BEGIN
 			,NULL
 			,NULL
 			,NULL
-			from LOCATION;   
+			from INSTALLATION;   
             
 END^
 SET TERM ; ^

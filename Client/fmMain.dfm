@@ -40,4 +40,14 @@ object frmMain: TfrmMain
     TabOrder = 0
     OnClick = btCheckForUpdatesClick
   end
+  object btRegisterInstall: TButton
+    Left = 35
+    Top = 8
+    Width = 115
+    Height = 25
+    Anchors = [akTop, akRight]
+    Caption = 'Register Install'
+    TabOrder = 1
+    OnClick = btRegisterInstallClick
+  end
 end

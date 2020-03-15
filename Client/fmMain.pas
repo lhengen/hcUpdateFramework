@@ -11,8 +11,10 @@ type
     btCheckForUpdates: TButton;
     laUpdateServerURI: TLabel;
     Label2: TLabel;
+    btRegisterInstall: TButton;
     procedure btCheckForUpdatesClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
+    procedure btRegisterInstallClick(Sender: TObject);
   private
     FURI :string;
   public
@@ -37,6 +39,23 @@ begin
   Client := TUpdateClient.Create(Self);
   Client.URI := FURI;
   sUpdateResult := Client.CheckForUpdates;
+  if sUpdateResult <> '' then
+    ShowMessage(sUpdateResult)
+  else
+  begin
+    MessageDlg('An Error Occurred.  Launching Notepad with the log file',mtError,[mbOK],0);
+    ShellExecuteW(Forms.Application.Handle, 'open', PWideChar('notepad.exe'), PWideChar('client.log'), PWideChar(ExtractFilePath(Application.ExeName)), SW_SHOWNORMAL) ;
+  end;
+end;
+
+procedure TfrmMain.btRegisterInstallClick(Sender: TObject);
+var
+  Client :TUpdateClient;
+  sUpdateResult :string;
+begin
+  Client := TUpdateClient.Create(Self);
+  Client.URI := FURI;
+  sUpdateResult := Client.RegisterInstall;
   if sUpdateResult <> '' then
     ShowMessage(sUpdateResult)
   else

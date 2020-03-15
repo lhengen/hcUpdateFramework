@@ -11,19 +11,22 @@ type
     FApplicationGUID,
     FURI :string;
     procedure SaveLocationGUID(const ALocationGUID: string);
+    function GetMachineGUID :string;
+    function GetComputerName: string;
   public
-    function RegisterLocation :string;
+    function RegisterInstall :string;
     function CheckForUpdates :string;
     property URI :string read FURI write FURI;
     property ApplicationGUID :string read FApplicationGUID write FApplicationGUID;
   end;
+
 
 implementation
 
 uses
   unIUpdateService, XMLDoc, XMLIntf, unWebServiceFileUtils,
   hcUpdateConsts, ADODB, SysUtils, unPath, hcVersionInfo, System.DateUtils,
-  System.IniFiles, hcUpdateSettings;
+  System.IniFiles, hcUpdateSettings, Winapi.Windows, System.Win.Registry;
 
 
 function TUpdateClient.CheckForUpdates :string;
@@ -175,10 +178,46 @@ begin
   end;
 end;
 
-function TUpdateClient.RegisterLocation: string;
+function TUpdateClient.GetComputerName: string;
+var
+  dwSize: DWORD;
+begin
+  // Set max size
+  dwSize := Succ(MAX_PATH);
+
+  // Resource protection
+  try
+    // Set string length
+    SetLength(result, dwSize);
+    // Attempt to get the computer name
+    if not (WinAPI.Windows.GetComputerName(@result[1], dwSize)) then
+      dwSize := 0;
+  finally
+    // Truncate string
+    SetLength(result, dwSize);
+  end;
+end;
+
+
+function TUpdateClient.GetMachineGUID: string;
+var
+  Registry: TRegistry;
+begin
+  Registry := TRegistry.Create(KEY_READ or KEY_WOW64_64KEY);
+  try
+    Registry.RootKey := HKEY_LOCAL_MACHINE;
+    if not Registry.OpenKeyReadOnly('SOFTWARE\Microsoft\Cryptography') then
+      raise Exception.Create('Unable to access MachineGUID');
+    Result := Registry.ReadString('MachineGuid');
+  finally
+    Registry.Free;
+  end;
+end;
+
+function TUpdateClient.RegisterInstall: string;
 var
   UpdateService :IUpdateService;
-  LocationGUID,
+  InstallGUID,
   ApplicationGUID,
   AppDir :string;
   XMLDoc : IXMLDocument;
@@ -187,7 +226,10 @@ var
   StartTime, EndTime :TDateTime;
   sError :string;
   DeviceFingerPrint: string;
+  DeviceGUID: string;
 begin
+  DeviceGUID := GetMachineGUID;;
+  DeviceFingerPrint := '';
   slProgress := TStringList.Create;
   StartTime := Now;
   slProgress.Add(Format('Update Log for a RegisterInstall request starting %s',[DateTimeToStr(StartTime)]));
@@ -203,7 +245,7 @@ begin
           raise Exception.CreateFmt('No Manifest file is present in ''%s''',[AppDir])
         else
         begin
-          slProgress.Add('Loading and Processing Existing Manifest');
+          slProgress.Add('Loading Manifest for RegisterInstall request');
           XMLDoc := TXMLDocument.Create(nil);
           try
             XMLDoc.LoadFromFile(AppDir + ManifestFileName);
@@ -215,25 +257,27 @@ begin
           end;
         end;
 
-        slProgress.Add('Loading Manifest for RegisterInstall request');
         slProgress.Add('Getting Reference to IUpdateService');
         UpdateService := GetIUpdateService(False, FURI);
         try
-          slProgress.Add(Format('Calling IUpdateService.GetLocationGUID with ApplicationGUID: %s LocationGUID: %s',[ApplicationGUID,LocationGUID]));
-          LocationGUID := UpdateService.RegisterInstall(ApplicationGUID,DeviceFingerPrint);
+          slProgress.Add(Format('Calling IUpdateService.RegisterInstall with ApplicationGUID: %s ',[ApplicationGUID]));
+          InstallGUID := UpdateService.RegisterInstall(ApplicationGUID,DeviceGUID,DeviceFingerPrint);
         except
           on E: Exception do   //server is likely not running
           begin   //translate the exception and re-raise (consumer must handle)
             Result := '';
-            slProgress.Add('Call to IUpdateService.GetUpdate FAILED with Error:' + E.Message);
+            slProgress.Add('Call to IUpdateService.RegisterInstall FAILED with Error:' + E.Message);
             raise;
           end;
         end;
 
-        if LocationGUID = EmptyStr then
+        if InstallGUID = EmptyStr then
           raise Exception.Create('LocationGUID was not returned!')
         else //save it on the AutoUpdate.config file
-          SaveLocationGUID(LocationGUID);
+        begin
+          Result := 'Installation Registered Successfully!';
+          SaveLocationGUID(InstallGUID);
+        end;
       finally
         CoUninitialize;
       end;

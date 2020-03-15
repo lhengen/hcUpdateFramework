@@ -61,12 +61,12 @@ type
   private
     FUpdateIsAvailable :Boolean;
     FApplicationManifest :ApplicationManifest;
-    FLocationGUID :string;
+    FInstallationGUID :string;
     FApplicationGUID :string;
   published
     property UpdateIsAvailable :Boolean read FUpdateIsAvailable write FUpdateIsAvailable;
     property NewManifest :ApplicationManifest read FApplicationManifest write FApplicationManifest;
-    property LocationGUID :string read FLocationGUID write FLocationGUID;
+    property InstallationGUID :string read FInstallationGUID write FInstallationGUID;
     property ApplicationGUID :string read FApplicationGUID write FApplicationGUID;
   end;
 
@@ -78,7 +78,7 @@ type
     function GetUpdate(const ApplicationGUID, LocationGUID, Manifest: string): ApplicationUpdateResult; stdcall;
     procedure UpdateReceived(const ApplicationGUID, LocationGUID, UpdateVersion: string); stdcall;
     procedure UpdateApplied(const ApplicationGUID, LocationGUID, UpdateVersion, UpdateResult, UpdateLog: string); stdcall;
-    function RegisterInstall(const ApplicationGUID, DeviceFingerPrint: string) :string; stdcall;  //returns InstallationGUID
+    function RegisterInstall(const ApplicationGUID, DeviceGUID, DeviceFingerPrint: string) :string; stdcall;  //returns InstallationGUID
   end;
 
 implementation
