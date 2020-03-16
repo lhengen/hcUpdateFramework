@@ -8,15 +8,13 @@ uses
 type
   TUpdateClient = class(TComponent)
   private
-    FApplicationGUID,
-    FURI :string;
-    procedure SaveLocationGUID(const ALocationGUID: string);
+    FApplicationGUID :string;
+    procedure SaveInstallionGUID(const AInstallionGUID: string);
     function GetMachineGUID :string;
     function GetComputerName: string;
   public
     function RegisterInstall :string;
     function CheckForUpdates :string;
-    property URI :string read FURI write FURI;
     property ApplicationGUID :string read FApplicationGUID write FApplicationGUID;
   end;
 
@@ -24,22 +22,22 @@ type
 implementation
 
 uses
-  unIUpdateService, XMLDoc, XMLIntf, unWebServiceFileUtils,
-  hcUpdateConsts, ADODB, SysUtils, unPath, hcVersionInfo, System.DateUtils,
-  System.IniFiles, hcUpdateSettings, Winapi.Windows, System.Win.Registry;
+  unIUpdateService, XMLDoc, XMLIntf, unPath, hcUpdateConsts,
+  SysUtils, hcVersionInfo, System.DateUtils, unWebServiceFileUtils,
+  hcUpdateSettings, Winapi.Windows, System.Win.Registry;
 
 
 function TUpdateClient.CheckForUpdates :string;
 {
   This method assumes the current application directory contains the Manifest file and that it
-  contains the LocationGUID and ApplicationGUID.  Client side manifests have these additional
-  root node attributes injected by the update server when requesting an update.
+  contains the ApplicationGUID.  It also assume that the AutoUpdates.ini file is present in the
+  same folder and has been updated to contain the InstallationGUID by the registration process.
 }
 var
   UpdateService :IUpdateService;
   AppUpdateResult :ApplicationUpdateResult;
   I: Integer;
-  LocationGUID,
+  InstallionGUID,
   ApplicationGUID,
   AppDir,
   UpdateDirectory :string;
@@ -56,7 +54,9 @@ begin
   StartTime := Now;
   slProgress.Add(Format('Update Log for a single request starting %s',[DateTimeToStr(StartTime)]));
   try
-    LocationGUID := AutoUpdateSettings.LocationGUID;
+    InstallionGUID := AutoUpdateSettings.InstallionGUID;
+    if InstallionGUID = EmptyStr then
+      raise Exception.Create('InstallionGUID is Empty!');
     try
       slProgress.Add('Initializing COM');
       CoInitialize(nil);
@@ -83,10 +83,10 @@ begin
           end;
 
           slProgress.Add('Getting Reference to IUpdateService');
-          UpdateService := GetIUpdateService(False, FURI);
+          UpdateService := GetIUpdateService(False, AutoUpdateSettings.WebServiceURI);
           try
-            slProgress.Add(Format('Calling IUpdateService.GetUpdate with ApplicationGUID: %s LocationGUID: %s',[ApplicationGUID,LocationGUID]));
-            AppUpdateResult := UpdateService.GetUpdate(ApplicationGUID,LocationGUID,StringStream.DataString);
+            slProgress.Add(Format('Calling IUpdateService.GetUpdate with ApplicationGUID: %s InstallionGUID: %s',[ApplicationGUID,InstallionGUID]));
+            AppUpdateResult := UpdateService.GetUpdate(ApplicationGUID,InstallionGUID,StringStream.DataString);
           except
             on E: Exception do   //server is likely not running
             begin   //translate the exception and re-raise (consumer must handle)
@@ -144,7 +144,7 @@ begin
               XMLDoc := nil;
             end;
             slProgress.Add('Calling IUpdateService.UpdateReceived');
-            UpdateService.UpdateReceived(ApplicationGUID,LocationGUID,AppUpdateResult.NewManifest.UpdateVersion);
+            UpdateService.UpdateReceived(ApplicationGUID,InstallionGUID,AppUpdateResult.NewManifest.UpdateVersion);
             Result := Format('Update v.%s is available!',[AppUpdateResult.NewManifest.UpdateVersion]);
             slProgress.Add(Format('Returning Result: %s',[Result]));
           end
@@ -217,7 +217,7 @@ end;
 function TUpdateClient.RegisterInstall: string;
 var
   UpdateService :IUpdateService;
-  InstallGUID,
+  InstallationGUID,
   ApplicationGUID,
   AppDir :string;
   XMLDoc : IXMLDocument;
@@ -258,10 +258,10 @@ begin
         end;
 
         slProgress.Add('Getting Reference to IUpdateService');
-        UpdateService := GetIUpdateService(False, FURI);
+        UpdateService := GetIUpdateService(False, AutoUpdateSettings.WebServiceURI);
         try
           slProgress.Add(Format('Calling IUpdateService.RegisterInstall with ApplicationGUID: %s ',[ApplicationGUID]));
-          InstallGUID := UpdateService.RegisterInstall(ApplicationGUID,DeviceGUID,DeviceFingerPrint);
+          InstallationGUID := UpdateService.RegisterInstall(ApplicationGUID,DeviceGUID,DeviceFingerPrint);
         except
           on E: Exception do   //server is likely not running
           begin   //translate the exception and re-raise (consumer must handle)
@@ -271,12 +271,12 @@ begin
           end;
         end;
 
-        if InstallGUID = EmptyStr then
+        if InstallationGUID = EmptyStr then
           raise Exception.Create('LocationGUID was not returned!')
         else //save it on the AutoUpdate.config file
         begin
           Result := 'Installation Registered Successfully!';
-          SaveLocationGUID(InstallGUID);
+          SaveInstallionGUID(InstallationGUID);
         end;
       finally
         CoUninitialize;
@@ -299,9 +299,9 @@ begin
   end;
 end;
 
-procedure TUpdateClient.SaveLocationGUID(const ALocationGUID: string);
+procedure TUpdateClient.SaveInstallionGUID(const AInstallionGUID: string);
 begin
-  AutoUpdateSettings.LocationGUID := ALocationGUID;
+  AutoUpdateSettings.InstallionGUID := AInstallionGUID;
   AutoUpdateSettings.WriteSettings;
 end;
 

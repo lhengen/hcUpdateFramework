@@ -23,7 +23,7 @@ type
 implementation
 
 uses
-  IniFiles, SysUtils, unPath;
+  IniFiles, SysUtils, unPath, hcUpdateSettings;
 
 { 
   Important: Methods and properties of objects in visual components can only be
@@ -53,24 +53,14 @@ uses
   Similarly, the developer can call the Queue method with similar parameters as 
   above, instead passing another TThread class as the first parameter, putting
   the calling thread in a queue with the other thread.
-    
+
 }
 
 { UpdateClientThread }
 
 procedure TUpdateClientThread.Execute;
-const
-  ConfigSection :string = 'Config';
-  PollingIntervalInMinutesIdent :string = 'PollingIntervalinMinutes';
-  UpdateServiceURIIdent :string = 'UpdateServiceURI';
-  LogAllMessagesIdent :string = 'LogAllMessages';
 var
-  sResult,
-  URI,
-  sFileName :string;
-  iniFile :TiniFile;
-  SleepTimeInMinutes :Integer;
-  LogAllMessages :boolean;
+  sResult :string;
 begin
   NameThreadForDebugging('UpdateClientThread');
   { Place thread code here }
@@ -80,47 +70,13 @@ begin
     try
       while not Terminated do
       begin
-        //establish defaults
-        SleepTimeInMinutes := 20;
-        URI :=  'http://localhost:8080/soap/IUpdateService';
-        LogAllMessages := False;
+        if AutoUpdateSettings.LogAllMessages then
+          Service.LogMessage(Format('URI is %s',[AutoUpdateSettings.WebServiceURI]),EVENTLOG_INFORMATION_TYPE,0,0);
 
-        sFileName := ChangeFileExt(AppFileName,'.ini');
-        if FileExists(sFileName) then
-        begin
-          iniFile := TIniFile.Create(sFileName);
-          try
-            SleepTimeInMinutes := iniFile.ReadInteger(ConfigSection,PollingIntervalinMinutesIdent,SleepTimeInMinutes);
-            URI := iniFile.ReadString(ConfigSection,UpdateServiceURIIdent,URI);
-            LogAllMessages := iniFile.ReadBool(ConfigSection,LogAllMessagesIdent,LogAllMessages);
-          finally
-            iniFile.Free
-          end;
-        end
-        else
-        begin
-          iniFile := TIniFile.Create(sFileName);
-          try
-            iniFile.WriteInteger(ConfigSection,PollingIntervalInMinutesIdent,SleepTimeInMinutes);
-            iniFile.WriteString(ConfigSection,UpdateServiceURIIdent,URI);
-            iniFile.WriteBool(ConfigSection,LogAllMessagesIdent,LogAllMessages);
-            iniFile.UpdateFile;
-          finally
-            iniFile.Free
-          end;
-        end;
-
-
-        FClientUpdate.URI := URI;
-        if not LogAllMessages then
-        begin
-          Service.LogMessage(Format('iniFile File Name is %s',[sFileName]),EVENTLOG_INFORMATION_TYPE,0,0);
-          Service.LogMessage(Format('URI is %s',[URI]),EVENTLOG_INFORMATION_TYPE,0,0);
-        end;
         FUpdateProgress.Clear;  //clear messages from previous run
         try
           sResult := FClientUpdate.CheckForUpdates;
-          if not LogAllMessages then
+          if AutoUpdateSettings.LogAllMessages then
             Service.LogMessage(sResult,EVENTLOG_INFORMATION_TYPE,0,0);
           //check if we are to apply the update and do so
           FUpdateApplier := ThcUpdateApplier.Create;
@@ -141,9 +97,9 @@ begin
           end;
         end;
 
-        if not LogAllMessages then
-          Service.LogMessage(Format('Sleeping for %d minutes',[SleepTimeInMinutes]),EVENTLOG_INFORMATION_TYPE,0,0);
-        Sleep(SleepTimeInMinutes * SecsPerMin * MSecsPerSec);
+        if AutoUpdateSettings.LogAllMessages then
+          Service.LogMessage(Format('Sleeping for %d minutes',[AutoUpdateSettings.SleepTimeInMinutes]),EVENTLOG_INFORMATION_TYPE,0,0);
+        Sleep(AutoUpdateSettings.SleepTimeInMinutes * SecsPerMin * MSecsPerSec);
       end;
     finally
       FClientUpdate.Free;

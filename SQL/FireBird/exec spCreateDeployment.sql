@@ -1,2 +1,2 @@
-execute procedure SPCREATEDEPLOYMENT (CHAR_TO_UUID ('ae99d5ce-fb4e-4afd-aca7-27af37b53aee'), '1.0.2', 'Nothing is new',
+execute procedure SPCREATEDEPLOYMENT (CHAR_TO_UUID ('8BF6627D-CB05-4601-996E-072DC6785F81'), '1.0.0.3', 'Nothing is new',
     FALSE, FALSE, TRUE);

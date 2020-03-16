@@ -22,9 +22,6 @@ type
   private
     FErrorEncountered :boolean;
     FApplySilentUpdates :boolean;
-    FAppDir,
-    FUpdateRootDir,
-    FWebServiceURI :string;
     FProgress :TStrings;
     FOnProgressUpdate :TNotifyEvent;
     FOnApplyUpdate :ThcApplyUpdateEvent;
@@ -41,7 +38,6 @@ type
     procedure DoPatcherProgress(ASender: TObject; const ACurrentPosition,
       AMaximumPosition: LongWord; var ACanContinue: LongBool);
     procedure OnProgressChange(Sender :TObject);
-    procedure LoadINISettings;
   public
     procedure AfterConstruction; override;
     procedure BeforeDestruction; override;
@@ -71,7 +67,7 @@ uses
   ,unIUpdateService
   ,hcUpdateConsts
   ,ActiveX
-  ,System.Zip
+  ,System.Zip, hcUpdateSettings
   ;
 
 function ThcUpdateApplier.MoveDir(const fromDir, toDir: string): Boolean;
@@ -103,50 +99,6 @@ begin
     FOnProgressUpdate(Self);
 end;
 
-procedure ThcUpdateApplier.LoadINISettings;
-const
-  ConfigSection :string = 'Config';
-  UpdateRootDirIdent :string = 'UpdateRootDir';
-  AppDirIdent :string = 'AppDir';
-  AppToLaunchIdent :string = 'AppToLaunch';
-  WebServiceURIIdent :string = 'UpdateServiceURI';
-
-var
-  iniFile :TIniFile;
-  sFileName :TFileName;
-
-begin
-  //initialize all settings to their default values
-  FAppDir := LongToShortPath(ExtractFilePath(Application.ExeName));
-  FUpdateRootDir := LongToShortPath(Format('%s%s',[FAppDir,'Updates']));
-  FWebServiceURI := 'http://localhost:8080/soap/IUpdateService';
-
-  sFileName := ChangeFileExt(Application.ExeName,'.ini');
-  if FileExists(sFileName) then
-  begin
-    iniFile := TIniFile.Create(sFileName);
-    try
-      FUpdateRootDir := iniFile.ReadString(ConfigSection,UpdateRootDirIdent,FUpdateRootDir);
-      FAppDir := iniFile.ReadString(ConfigSection,AppDirIdent,FAppDir);
-      FWebServiceURI := iniFile.ReadString(ConfigSection,WebServiceURIIdent,FWebServiceURI);
-    finally
-      iniFile.Free
-    end;
-  end
-  else
-  begin
-    iniFile := TIniFile.Create(sFileName);
-    try
-      iniFile.WriteString(ConfigSection,UpdateRootDirIdent,FUpdateRootDir);
-      iniFile.WriteString(ConfigSection,AppDirIdent,FAppDir);
-      iniFile.WriteString(ConfigSection,WebServiceURIIdent,FWebServiceURI);
-      iniFile.UpdateFile;
-    finally
-      iniFile.Free
-    end;
-  end;
-end;
-
 function ThcUpdateApplier.CheckForUpdatesAndApply :integer;
 {
   We assume this EXE is in the same directory as the TargetEXE by default.
@@ -157,14 +109,13 @@ var
   FileAttrs :Integer;
   slDirs :ThcVersionList;
 begin
-  Progress.Add('Checking for Updates...');
-  LoadINISettings;
+  Progress.Add('Checking for Updates on File System...');
   //get directories of pending updates
   slDirs := ThcVersionList.Create;
   try
     //get directory listing under UpdateRootDir of all Pending Updates
     FileAttrs := faDirectory;
-    if SysUtils.FindFirst(FUpdateRootDir + 'Pending\*.*', FileAttrs, sr) = 0 then
+    if SysUtils.FindFirst(AutoUpdateSettings.UpdateRootDir + 'Pending\*.*', FileAttrs, sr) = 0 then
     begin
       repeat
         if ((sr.Attr and FileAttrs) = sr.Attr) and (sr.Name <> '.') and (sr.Name <> '..') then
@@ -214,7 +165,7 @@ var
   DestinationFile,
   UpdateResult,
   ApplicationGUID,
-  LocationGUID,
+  InstallationGUID,
   UpdateDir,
   AppliedDir,
   BackupDir,
@@ -223,11 +174,6 @@ var
   UpdateService :IUpdateService;
   WinResult :integer;
   ZipFile :TZipFile;
-  {$ifdef FABUTAN}
-  SyncClient :TftSyncClient;
-  SyncProgrammability: boolean;
-  SyncData: boolean;
-  {$endif}
 begin
   CoInitialize(nil);
   try
@@ -235,14 +181,15 @@ begin
       //load manifest
       XMLDoc := TXMLDocument.Create(nil);
       try
-        UpdateDir := LongToShortPath(Format('%s%s\%s\',[FUpdateRootDir,'Pending',UpdateSubDir]));
+        UpdateDir := LongToShortPath(Format('%s%s\%s\',[AutoUpdateSettings.UpdateRootDir,'Pending',UpdateSubDir]));
         sManifestFileName := UpdateDir + ManifestFileName;
         Progress.Add(Format('Loading Update Manifest from %s',[sManifestFileName]));
         XMLDoc.LoadFromFile(sManifestFileName);
         XMLDoc.Active := True;
 
         iRootNode := XMLDoc.ChildNodes.First;
-        LocationGUID := iRootNode.Attributes['LocationGUID'];
+        Progress.Add(Format('Getting InstallationGUID: %s ',[AutoUpdateSettings.InstallionGUID]));
+        InstallationGUID := AutoUpdateSettings.InstallionGUID;
         ApplicationGUID := iRootNode.Attributes['ApplicationGUID'];
 
         //if the INI file says we're to apply silent updates then proceed otherwise
@@ -256,7 +203,7 @@ begin
 
         //---backup files about to be replaced
         Progress.Add('Backing Up Files...');
-        BackupDir := Format('%s%s\%s\',[FUpdateRootDir,'Backup',LongToShortPath(UpdateSubDir)]);
+        BackupDir := Format('%s%s\%s\',[AutoUpdateSettings.UpdateRootDir,'Backup',LongToShortPath(UpdateSubDir)]);
         Progress.Add(Format('Creating Backup Folder: %s',[BackupDir]));
         if not SysUtils.ForceDirectories(BackupDir) then
           raise Exception.Create(Format('Unable to create folder: %s',[BackupDir]));
@@ -267,7 +214,7 @@ begin
         begin
           iNode := iRootNode.ChildNodes[I];
           if iNode.Attributes['TargetPath'] = AppDir then
-            TargetPath := FAppDir
+            TargetPath := AutoUpdateSettings.AppDir
           else
             TargetPath := iNode.Attributes['TargetPath'];
 
@@ -392,7 +339,7 @@ begin
         raise Exception.Create(SysErrorMessage(GetLastError));
 
       //move the Update from Pending into Applied
-      AppliedDir := FUpdateRootDir + 'Applied\';
+      AppliedDir := AutoUpdateSettings.UpdateRootDir + 'Applied\';
       if not SysUtils.ForceDirectories(AppliedDir) then
         raise Exception.Create(Format('Unable to create folder: %s',[AppliedDir]));
 
@@ -403,14 +350,14 @@ begin
 
       //tell the UpdateServer we applied the update
       UpdateResult := UpdateResultNames[urSuccess];
-      UpdateService := GetIUpdateService(False, FWebServiceURI);
+      UpdateService := GetIUpdateService(False, AutoUpdateSettings.WebServiceURI);
       Progress.Add('Calling Web Service to Report Update Applied SuccessFully!');
       try
-        UpdateService.UpdateApplied(ApplicationGUID,LocationGUID,iRootNode.Attributes['UpdateVersion'],UpdateResult,Progress.Text);
+        UpdateService.UpdateApplied(ApplicationGUID,InstallationGUID,iRootNode.Attributes['UpdateVersion'],UpdateResult,Progress.Text);
       except
         on E: Exception do   //server is likely not running
         begin   //translate the exception and re-raise (consumer must handle)
-          sErrorMessage := Format('Fabware was updated successfully but could not contact Head Office.  If you have any problems, contact technical support and advise them of the following: Error making UpdateApplied web service call to %s.  '#13#10'The original error reported is: %s',[FWebServiceURI,E.Message]);
+          sErrorMessage := Format('Application was updated successfully but could not contact Head Office.  If you have any problems, contact technical support and advise them of the following: Error making UpdateApplied web service call to %s.  '#13#10'The original error reported is: %s',[AutoUpdateSettings.WebServiceURI,E.Message]);
           Progress.Add(sErrorMessage);
         end;
       end;
@@ -427,14 +374,14 @@ begin
         //tell the UpdateServer we failed during application of the update
         UpdateResult := UpdateResultNames[urFailure];
         if not Assigned(UpdateService) then
-          UpdateService := GetIUpdateService(False, FWebServiceURI);
+          UpdateService := GetIUpdateService(False, AutoUpdateSettings.WebServiceURI);
         Progress.Add('Calling Web Service to Report Update Failed!');
         try
-          UpdateService.UpdateApplied(ApplicationGUID,LocationGUID,iRootNode.Attributes['UpdateVersion'],UpdateResult,Progress.Text);
+          UpdateService.UpdateApplied(ApplicationGUID,InstallationGUID,iRootNode.Attributes['UpdateVersion'],UpdateResult,Progress.Text);
         except
           on E: Exception do   //server is likely not running
           begin
-            sErrorMessage := Format('Error making UpdateApplied web service call to %s.  '#13#10'The error reported is: %s',[FWebServiceURI,E.Message]);
+            sErrorMessage := Format('Error making UpdateApplied web service call to %s.  '#13#10'The error reported is: %s',[AutoUpdateSettings.WebServiceURI,E.Message]);
             Progress.Add(sErrorMessage);
           end;
         end;

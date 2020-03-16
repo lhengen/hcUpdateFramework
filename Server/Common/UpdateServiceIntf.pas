@@ -75,9 +75,9 @@ type
   ['{6DFF52A8-106B-4D68-AF10-7E424C17AAEF}']
     { Methods of Invokable interface must not use the default }
     { calling convention; stdcall is recommended }
-    function GetUpdate(const ApplicationGUID, LocationGUID, Manifest: string): ApplicationUpdateResult; stdcall;
-    procedure UpdateReceived(const ApplicationGUID, LocationGUID, UpdateVersion: string); stdcall;
-    procedure UpdateApplied(const ApplicationGUID, LocationGUID, UpdateVersion, UpdateResult, UpdateLog: string); stdcall;
+    function GetUpdate(const ApplicationGUID, InstallationGUID, Manifest: string): ApplicationUpdateResult; stdcall;
+    procedure UpdateReceived(const ApplicationGUID, InstallationGUID, UpdateVersion: string); stdcall;
+    procedure UpdateApplied(const ApplicationGUID, InstallationGUID, UpdateVersion, UpdateResult, UpdateLog: string); stdcall;
     function RegisterInstall(const ApplicationGUID, DeviceGUID, DeviceFingerPrint: string) :string; stdcall;  //returns InstallationGUID
   end;
 

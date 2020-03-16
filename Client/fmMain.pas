@@ -16,7 +16,6 @@ type
     procedure FormCreate(Sender: TObject);
     procedure btRegisterInstallClick(Sender: TObject);
   private
-    FURI :string;
   public
   end;
 
@@ -37,7 +36,6 @@ var
   sUpdateResult :string;
 begin
   Client := TUpdateClient.Create(Self);
-  Client.URI := FURI;
   sUpdateResult := Client.CheckForUpdates;
   if sUpdateResult <> '' then
     ShowMessage(sUpdateResult)
@@ -54,7 +52,6 @@ var
   sUpdateResult :string;
 begin
   Client := TUpdateClient.Create(Self);
-  Client.URI := FURI;
   sUpdateResult := Client.RegisterInstall;
   if sUpdateResult <> '' then
     ShowMessage(sUpdateResult)

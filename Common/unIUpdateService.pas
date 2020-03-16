@@ -124,9 +124,9 @@ type
   // ************************************************************************ //
   IUpdateService = interface(IInvokable)
   ['{7115F6C6-418F-AC9A-1460-C8F433092514}']
-    function  GetUpdate(const ApplicationGUID: string; const LocationGUID: string; const Manifest: string): ApplicationUpdateResult; stdcall;
-    procedure UpdateReceived(const ApplicationGUID: string; const LocationGUID: string; const UpdateVersion: string); stdcall;
-    procedure UpdateApplied(const ApplicationGUID: string; const LocationGUID: string; const UpdateVersion: string; const UpdateResult: string; const UpdateLog: string); stdcall;
+    function  GetUpdate(const ApplicationGUID: string; const InstallationGUID: string; const Manifest: string): ApplicationUpdateResult; stdcall;
+    procedure UpdateReceived(const ApplicationGUID: string; const InstallationGUID: string; const UpdateVersion: string); stdcall;
+    procedure UpdateApplied(const ApplicationGUID: string; const InstallationGUID: string; const UpdateVersion: string; const UpdateResult: string; const UpdateLog: string); stdcall;
     function RegisterInstall(const ApplicationGUID, DeviceGUID, DeviceFingerPrint: string) :string; stdcall;  //returns InstallationGUID aka LocationGUID
   end;
 

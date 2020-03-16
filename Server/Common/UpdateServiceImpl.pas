@@ -66,13 +66,12 @@ const
     'LastAttemptUTCDate, '+
     'UpdateResult, '+
     'UpdateLog, '+
-    'l.Description as LocationName, '+
     'IsMandatory, '+
     'IsSilent, '+
     'IsImmediate '+
     'FROM InstallationDeployment id '+
     'inner join Deployment d on d.DeploymentGUID = id.DeploymentGUID '+
-    'inner join Location l on l.LocationGUID = id.InstallationGUID '+
+    'inner join Installation l on l.InstallationGUID = id.InstallationGUID '+
     'where id.InstallationGUID = %1:s '+
     'and d.ApplicationGUID = %2:s '+
     'and ReceivedUTCDate IS NULL '+
@@ -95,7 +94,16 @@ begin
     with FDataModule.qryWorker do
     begin
       {$ifdef Firebird}
-      SQL.Text := format(CheckForUpdateSQL,['first',Format('CHAR_TO_UUID(''%s'')',[InstallationGUID]),Format('CHAR_TO_UUID(''%s'')',[ApplicationGUID]),'True','CURRENT_TIMESTAMP']); //TODO - change to use utc
+      assert(Length(InstallationGUID) = 36,Format('InstallationGUID is invalid: %s',[InstallationGUID]));
+      assert(Length(ApplicationGUID) = 36,Format('ApplicationGUID is invalid: %s',[ApplicationGUID]));
+      SQL.Text := format(CheckForUpdateSQL,
+      [
+        'first'
+        ,Format('CHAR_TO_UUID(''%s'')',[InstallationGUID])
+        ,Format('CHAR_TO_UUID(''%s'')',[ApplicationGUID])
+        ,'True'
+        ,'CURRENT_TIMESTAMP'
+      ]); //TODO - change to use utc
       {$else}
       SQL.Text := format(CheckForUpdateSQL,['top',AnsiQuotedStr(InstallationGUID,''''),AnsiQuotedStr(ApplicationGUID,''''),'1','getutcdate()']);
       {$endif}
@@ -188,7 +196,7 @@ end;
 
 function ApplicationUpdateService.RegisterInstall(const ApplicationGUID, DeviceGUID, DeviceFingerPrint: string) :string; stdcall;  //returns InstallationGUID
 const
-  CreateLocationSQL :string =
+  CreateInstallationSQL :string =
     'insert into Installation(InstallationGUID,ApplicationGUID, LocationGUID, DeviceGUID, DeviceFingerPrint) values (%s,%s,%s,%s,''%s'' )';
 begin
   FDataModule.cnDeployment.Connected := True;
@@ -196,17 +204,19 @@ begin
     with FDataModule.qryWorker do
     begin
       {$ifdef Firebird}
+      assert(Length(DeviceGUID) = 36,Format('DeviceGUID is invalid: %s',[DeviceGUID]));
+      assert(Length(ApplicationGUID) = 36,Format('ApplicationGUID is invalid: %s',[ApplicationGUID]));
       SQL.Text := 'select UUID_TO_CHAR(gen_uuid()) from RDB$Database';
       Open;
       Result := Fields[0].AsString;
       Close;
 
-      SQL.Text := format(CreateLocationSQL,[
+      SQL.Text := format(CreateInstallationSQL,[
         Format('CHAR_TO_UUID(''%s'')',[Result]),
         Format('CHAR_TO_UUID(''%s'')',[ApplicationGUID]),
         //this is temporary to accomodate automatic registration for a specific company's inhouse software
         //normally we would get address or lat/long location information and use this to create a new Location then a new install at that location
-        'CHAR_TO_UUID(''2bc5cc04-2307-41ab-9f3c-b3f8c0578be9'')',
+        'CHAR_TO_UUID(''3380EB06-FFC6-4E7A-8D15-4B87FDC4AEEB'')',
         Format('CHAR_TO_UUID(''%s'')',[DeviceGUID]),
         DeviceFingerPrint
       ]); //todo - change to use UTC
@@ -226,7 +236,7 @@ end;
 procedure ApplicationUpdateService.UpdateApplied(const ApplicationGUID, InstallationGUID, UpdateVersion, UpdateResult, UpdateLog: string);
 const
   UpdateAppliedSQL :string =
-    'update InstallDeployment set UpdatedUTCDate = %0:s, LastAttemptUTCDate = %0:s, UpdateResult = ''%1:s'', UpdateLog = ''%2:s'' '+
+    'update InstallationDeployment set UpdatedUTCDate = %0:s, LastAttemptUTCDate = %0:s, UpdateResult = ''%1:s'', UpdateLog = ''%2:s'' '+
     'where InstallationGUID = %3:s and DeploymentGUID = (select DeploymentGUID from Deployment where '+
     ' ApplicationGUID = %4:s and Status = ''Active'' and UpdateVersion = ''%5:s'')';
 begin
@@ -235,7 +245,16 @@ begin
     with FDataModule.qryWorker do
     begin
       {$ifdef Firebird}
-      SQL.Text := format(UpdateAppliedSQL,['current_timestamp',UpdateResult,UpdateLog,Format('CHAR_TO_UUID(''%s'')',[InstallationGUID]),Format('CHAR_TO_UUID(''%s'')',[ApplicationGUID]),UpDateVersion]); //todo - change to use utc
+      assert(Length(InstallationGUID) = 36,Format('InstallationGUID is invalid: %s',[InstallationGUID]));
+      assert(Length(ApplicationGUID) = 36,Format('ApplicationGUID is invalid: %s',[ApplicationGUID]));
+      SQL.Text := format(UpdateAppliedSQL,[
+        'current_timestamp'
+        ,UpdateResult
+        ,UpdateLog
+        ,Format('CHAR_TO_UUID(''%s'')',[InstallationGUID])
+        ,Format('CHAR_TO_UUID(''%s'')',[ApplicationGUID])
+        ,UpdateVersion
+      ]); //todo - change to use utc
       {$else}
       SQL.Text := format(UpdateAppliedSQL,['getutcdate()',UpdateResult,UpdateLog,InstallationGUID,ApplicationGUID,UpDateVersion]);
       {$endif}
@@ -249,7 +268,7 @@ end;
 procedure ApplicationUpdateService.UpdateReceived(const ApplicationGUID, InstallationGUID, UpdateVersion: string);
 const
   UpdateAppliedSQL :string =
-    'update InstallDeployment set ReceivedUTCDate = %0:s '+
+    'update InstallationDeployment set ReceivedUTCDate = %0:s '+
     'where InstallationGUID = %1:s and DeploymentGUID = (select DeploymentGUID from Deployment where '+
     ' ApplicationGUID = %2:s and Status = ''Active'' and UpdateVersion = ''%3:s'')';
 begin
@@ -258,6 +277,8 @@ begin
     with FDataModule.qryWorker do
     begin
       {$ifdef Firebird}
+      assert(Length(InstallationGUID) = 36,Format('InstallationGUID is invalid: %s',[InstallationGUID]));
+      assert(Length(ApplicationGUID) = 36,Format('ApplicationGUID is invalid: %s',[ApplicationGUID]));
       SQL.Text := format(UpdateAppliedSQL,['current_timestamp',Format('CHAR_TO_UUID(''%s'')',[InstallationGUID]),Format('CHAR_TO_UUID(''%s'')',[ApplicationGUID]),UpdateVersion]); //todo - change to use utc
       {$else}
       SQL.Text := format(UpdateAppliedSQL,['getutcdate()',InstallationGUID,ApplicationGUID,UpdateVersion]);

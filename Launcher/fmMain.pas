@@ -139,7 +139,7 @@ procedure TfrmMain.LaunchEXEAndTerminate;
 var
   FileNameWithPath :string;
 begin
-  FileNameWithPath := AutoUpdateSettings.AppDir + AutoUpdateSettings.TargetEXE;
+  FileNameWithPath := IncludeTrailingPathDelimiter(AutoUpdateSettings.AppDir) + AutoUpdateSettings.TargetEXE;
   if not FileExists(FileNameWithPath) then
     MessageDlg(Format('EXE Specified in INI file does not Exist: '#13#10'''%s''',[FileNameWithPath]),mtWarning,[mbOk],0);
   ShellExecute(Handle, 'open', PWideChar(WideString(AutoUpdateSettings.AppDir + AutoUpdateSettings.TargetEXE)), nil, nil, SW_SHOWNORMAL) ;
