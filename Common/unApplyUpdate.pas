@@ -118,7 +118,8 @@ begin
     if SysUtils.FindFirst(AutoUpdateSettings.UpdateRootDir + 'Pending\*.*', FileAttrs, sr) = 0 then
     begin
       repeat
-        if ((sr.Attr and FileAttrs) = sr.Attr) and (sr.Name <> '.') and (sr.Name <> '..') then
+        //commented out condition since it's not true when update is in C:\Users\<user>\AppData\Local\ subfolder
+        if {((sr.Attr and FileAttrs) = sr.Attr) and} (sr.Name <> '.') and (sr.Name <> '..') then
         begin
           slDirs.Add(sr.Name);
         end;

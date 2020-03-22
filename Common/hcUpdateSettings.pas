@@ -63,9 +63,8 @@ begin
   inherited;
 
   //initialize all settings to their default values
-  FAppDir := IncludeTrailingPathDelimiter(LongToShortPath(ExtractFilePath(Application.ExeName)));
+  AppDir := IncludeTrailingPathDelimiter(LongToShortPath(ExtractFilePath(Application.ExeName)));
   FTargetEXE := 'Some.EXE';
-  FUpdateRootDir := LongToShortPath(FAppDir) + 'Updates\';
   FWebServiceURI := 'http://localhost:8080/soap/IUpdateService';
   FFileName := FAppDir + AutoUpdateConfigFileName;
   FLogAllMessages := True;
@@ -107,6 +106,7 @@ end;
 procedure ThcAutoUpdateSettings.SetAppDir(const AValue: string);
 begin
   FAppDir := IncludeTrailingPathDelimiter(AValue);
+  FUpdateRootDir := FAppDir + 'Updates\';
 end;
 
 procedure ThcAutoUpdateSettings.SetUpdateRootDir(const AValue: string);

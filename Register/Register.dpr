@@ -21,6 +21,11 @@ begin
   Client := TUpdateClient.Create(nil);
   try
     sUpdateResult := Client.RegisterInstall;
+    if sUpdateResult.StartsWith('ERROR') then
+    begin
+      ExitCode := 99;
+      ShowMessage(sUpdateResult);
+    end;
   finally
     Client.Free;
   end;

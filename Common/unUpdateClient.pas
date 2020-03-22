@@ -302,6 +302,8 @@ end;
 procedure TUpdateClient.SaveInstallionGUID(const AInstallionGUID: string);
 begin
   AutoUpdateSettings.InstallionGUID := AInstallionGUID;
+  //update folders to actual deployment path
+  AutoUpdateSettings.AppDir := ExtractFilePath(AppFileName);
   AutoUpdateSettings.WriteSettings;
 end;
 
