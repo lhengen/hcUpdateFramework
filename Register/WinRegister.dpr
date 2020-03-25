@@ -1,5 +1,7 @@
 program WinRegister;
 
+{$R 'WinRegisterManifest.res' 'WinRegisterManifest.rc'}
+
 uses
   Vcl.Forms,
   unUpdateClient in '..\Common\unUpdateClient.pas',
@@ -8,7 +10,8 @@ uses
   unPath in '..\Common\unPath.pas',
   hcUpdateConsts in '..\Common\hcUpdateConsts.pas',
   unWebServiceFileUtils in '..\Common\unWebServiceFileUtils.pas',
-  MainForm in 'MainForm.pas' {Form3};
+  MainForm in 'MainForm.pas' {Form3},
+  PJSysInfo in 'PJSysInfo.pas';
 
 {$R *.res}
 

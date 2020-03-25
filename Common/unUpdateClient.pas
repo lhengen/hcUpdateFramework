@@ -11,7 +11,8 @@ type
     FApplicationGUID :string;
     procedure SaveInstallionGUID(const AInstallionGUID: string);
     function GetMachineGUID :string;
-    function GetComputerName: string;
+  protected
+    function GetDeviceFingerPrint :string; virtual;
   public
     function RegisterInstall :string;
     function CheckForUpdates :string;
@@ -24,7 +25,8 @@ implementation
 uses
   unIUpdateService, XMLDoc, XMLIntf, unPath, hcUpdateConsts,
   SysUtils, hcVersionInfo, System.DateUtils, unWebServiceFileUtils,
-  hcUpdateSettings, Winapi.Windows, System.Win.Registry;
+  hcUpdateSettings, Winapi.Windows, System.Win.Registry, PJSysInfo,
+  System.TypInfo;
 
 
 function TUpdateClient.CheckForUpdates :string;
@@ -178,26 +180,119 @@ begin
   end;
 end;
 
-function TUpdateClient.GetComputerName: string;
+function TUpdateClient.GetDeviceFingerPrint: string;
+const
+  cProcessors: array[TPJProcessorArchitecture] of string = (
+    'paUnknown', 'paX64', 'paIA64', 'paX86'
+  );
+  cBootModes: array[TPJBootMode] of string = (
+    'bmUnknown', 'bmNormal', 'bmSafeMode', 'bmSafeModeNetwork'
+  );
 var
-  dwSize: DWORD;
+  slFingerPrint :TStringList;
 begin
-  // Set max size
-  dwSize := Succ(MAX_PATH);
-
-  // Resource protection
+  slFingerPrint := TStringList.Create;
   try
-    // Set string length
-    SetLength(result, dwSize);
-    // Attempt to get the computer name
-    if not (WinAPI.Windows.GetComputerName(@result[1], dwSize)) then
-      dwSize := 0;
-  finally
-    // Truncate string
-    SetLength(result, dwSize);
-  end;
-end;
+    with slFingerPrint do
+    begin
+      //Computer information
+      AddPair('User Name', TPJComputerInfo.UserName);
+      AddPair('Computer Name', TPJComputerInfo.ComputerName);
+      AddPair('MAC Address', TPJComputerInfo.MACAddress);
+      AddPair('Processor Count', IntToStr(TPJComputerInfo.ProcessorCount));
+      AddPair('Processor Architecture', cProcessors[TPJComputerInfo.Processor]);
+      AddPair('Processor Identifier', TPJComputerInfo.ProcessorIdentifier);
+      AddPair('Processor Name', TPJComputerInfo.ProcessorName);
+      AddPair('Processor Speed (MHz)', IntToStr(TPJComputerInfo.ProcessorSpeedMHz));
+      AddPair('Is 64 Bit?', BoolToStr(TPJComputerInfo.Is64Bit,True));
+      AddPair('Is Network Present?', BoolToStr(TPJComputerInfo.IsNetworkPresent,True));
+      AddPair('Boot Mode', cBootModes[TPJComputerInfo.BootMode]);
+      AddPair('Is Administrator?', BoolToStr(TPJComputerInfo.IsAdmin,True));
+      AddPair('Is UAC active?', BoolToStr(TPJComputerInfo.IsUACActive,True));
+      AddPair('BIOS Vender', TPJComputerInfo.BiosVendor);
+      AddPair('System Manufacturer', TPJComputerInfo.SystemManufacturer);
+      AddPair('System Product Name', TPJComputerInfo.SystemProductName);
 
+      //OS information
+      AddPair('BuildNumber', IntToStr(TPJOSInfo.BuildNumber));
+      AddPair('Description', TPJOSInfo.Description);
+      AddPair('Edition', TPJOSInfo.Edition);
+      if SameDateTime(TPJOSInfo.InstallationDate, 0.0) then
+        AddPair('InstallationDate', 'Unknown')
+      else
+        AddPair('InstallationDate', DateTimeToStr(TPJOSInfo.InstallationDate));
+      AddPair('IsServer', BoolToStr(TPJOSInfo.IsServer,True));
+      AddPair('IsWin32s', BoolToStr(TPJOSInfo.IsWin32s,True));
+      AddPair('IsWin9x', BoolToStr(TPJOSInfo.IsWin9x,True));
+      AddPair('IsWinNT', BoolToStr(TPJOSInfo.IsWinNT,True));
+      AddPair('IsWow64', BoolToStr(TPJOSInfo.IsWow64,True));
+      AddPair('IsMediaCenter', BoolToStr(TPJOSInfo.IsMediaCenter,True));
+      AddPair('IsTabletPC', BoolToStr(TPJOSInfo.IsTabletPC,True));
+      AddPair('IsRemoteSession', BoolToStr(TPJOSInfo.IsRemoteSession,True));
+      AddPair('MajorVersion', IntToStr(TPJOSInfo.MajorVersion));
+      AddPair('MinorVersion', IntToStr(TPJOSInfo.MinorVersion));
+
+      AddPair('Platform', GetEnumName(TypeInfo(TPJOSPlatform),Ord(TPJOSInfo.Platform)));
+      AddPair('Product', TPJOSInfo.ProductName);
+      AddPair('ProductID', TPJOSInfo.ProductID);
+      AddPair('ProductName', TPJOSInfo.ProductName);
+      AddPair('ServicePack', TPJOSInfo.ServicePack);
+      AddPair('ServicePackEx', TPJOSInfo.ServicePackEx);
+
+      AddPair('ServicePackMajor', IntToStr(TPJOSInfo.ServicePackMajor));
+      AddPair('ServicePackMinor', IntToStr(TPJOSInfo.ServicePackMinor));
+      AddPair('HasPenExtensions', BoolToStr(TPJOSInfo.HasPenExtensions,True));
+      AddPair('RegisteredOrganization', TPJOSInfo.RegisteredOrganisation);
+      AddPair('RegisteredOwner', TPJOSInfo.RegisteredOwner);
+      AddPair('CanSpoof', BoolToStr(TPJOSInfo.CanSpoof,True));
+      AddPair('IsReallyWindows2000OrGreater',
+        BoolToStr(TPJOSInfo.IsReallyWindows2000OrGreater,True));
+      AddPair('IsReallyWindows2000SP1OrGreater',
+        BoolToStr(TPJOSInfo.IsReallyWindows2000SP1OrGreater,True));
+      AddPair('IsReallyWindows2000SP2OrGreater',
+        BoolToStr(TPJOSInfo.IsReallyWindows2000SP2OrGreater,True));
+      AddPair('IsReallyWindows2000SP3OrGreater',
+        BoolToStr(TPJOSInfo.IsReallyWindows2000SP3OrGreater,True));
+      AddPair('IsReallyWindows2000SP4OrGreater',
+        BoolToStr(TPJOSInfo.IsReallyWindows2000SP4OrGreater,True));
+      AddPair('IsReallyWindowsXPOrGreater',
+        BoolToStr(TPJOSInfo.IsReallyWindowsXPOrGreater,True));
+      AddPair('IsReallyWindowsXPSP1OrGreater',
+        BoolToStr(TPJOSInfo.IsReallyWindowsXPSP1OrGreater,True));
+      AddPair('IsReallyWindowsXPSP2OrGreater',
+        BoolToStr(TPJOSInfo.IsReallyWindowsXPSP2OrGreater,True));
+      AddPair('IsReallyWindowsXPSP3OrGreater',
+        BoolToStr(TPJOSInfo.IsReallyWindowsXPSP3OrGreater,True));
+      AddPair('IsReallyWindowsVistaOrGreater',
+        BoolToStr(TPJOSInfo.IsReallyWindowsVistaOrGreater,True));
+      AddPair('IsReallyWindowsVistaSP1OrGreater',
+        BoolToStr(TPJOSInfo.IsReallyWindowsVistaSP1OrGreater,True));
+      AddPair('IsReallyWindowsVistaSP2OrGreater',
+        BoolToStr(TPJOSInfo.IsReallyWindowsVistaSP2OrGreater,True));
+      AddPair('IsReallyWindows7OrGreater',
+        BoolToStr(TPJOSInfo.IsReallyWindows7OrGreater,True));
+      AddPair('IsReallyWindows7SP1OrGreater',
+        BoolToStr(TPJOSInfo.IsReallyWindows7SP1OrGreater,True));
+      AddPair('IsReallyWindows8OrGreater',
+        BoolToStr(TPJOSInfo.IsReallyWindows8OrGreater,True));
+      AddPair('IsReallyWindows8Point1OrGreater',
+        BoolToStr(TPJOSInfo.IsReallyWindows8Point1OrGreater,True));
+      AddPair('IsReallyWindows10OrGreater',
+        BoolToStr(TPJOSInfo.IsReallyWindows10OrGreater,True));
+      AddPair('IsWindowsServer', BoolToStr(TPJOSInfo.IsWindowsServer,True));
+      AddPair('Win32Platform', IntToStr(Win32Platform));
+      AddPair('Win32MajorVersion', IntToStr(Win32MajorVersion));
+      AddPair('Win32MinorVersion', IntToStr(Win32MinorVersion));
+      AddPair('Win32BuildNumber', IntToStr(Win32BuildNumber));
+      AddPair('Win32CSDVersion', Win32CSDVersion);
+    end;
+    Result := slFingerPrint.Text;
+  finally
+    slFingerPrint.Free;
+  end;
+
+
+end;
 
 function TUpdateClient.GetMachineGUID: string;
 var
@@ -229,7 +324,7 @@ var
   DeviceGUID: string;
 begin
   DeviceGUID := GetMachineGUID;;
-  DeviceFingerPrint := '';
+  DeviceFingerPrint := GetDeviceFingerPrint;
   slProgress := TStringList.Create;
   StartTime := Now;
   slProgress.Add(Format('Update Log for a RegisterInstall request starting %s',[DateTimeToStr(StartTime)]));
