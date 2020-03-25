@@ -206,6 +206,21 @@ begin
       {$ifdef Firebird}
       assert(Length(DeviceGUID) = 36,Format('DeviceGUID is invalid: %s',[DeviceGUID]));
       assert(Length(ApplicationGUID) = 36,Format('ApplicationGUID is invalid: %s',[ApplicationGUID]));
+
+      //check if the installation has already been registered and if so return the InstallationGUID
+      SQL.Text := Format('select UUID_TO_CHAR(InstallationGUID) from Installation where ApplicationGUID = %s and DeviceGUID = %s',
+      [
+        Format('CHAR_TO_UUID(''%s'')',[ApplicationGUID]),
+        Format('CHAR_TO_UUID(''%s'')',[DeviceGUID])
+      ]);
+      Open;
+      if not IsEmpty then
+      begin
+        Result := Fields[0].AsString;
+        Exit;
+      end;
+      Close;
+
       SQL.Text := 'select UUID_TO_CHAR(gen_uuid()) from RDB$Database';
       Open;
       Result := Fields[0].AsString;
