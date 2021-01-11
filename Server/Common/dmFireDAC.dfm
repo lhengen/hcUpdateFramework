@@ -8,7 +8,7 @@ object dtmFireDAC: TdtmFireDAC
     Left = 192
     Top = 48
   end
-  object cnDeployment: ThcFireDACConnection
+  object cnDeployment: TFDConnection
     Params.Strings = (
       'Database=C:\Data\SkyStone\DEPLOYMENT.FDB'
       'User_Name=SYSDBA'
@@ -18,7 +18,6 @@ object dtmFireDAC: TdtmFireDAC
     FetchOptions.Mode = fmAll
     FetchOptions.Unidirectional = True
     FetchOptions.RecordCountMode = cmFetched
-    AllowStreamConnected = False
     Left = 88
     Top = 48
   end

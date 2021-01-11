@@ -4,7 +4,7 @@ program UpdateWinUIServer;
 {$define D16}
 
 uses
-  FastMM4,
+//  FastMM4,
   Forms,
   WebReq,
   IdHTTPWebBrokerBridge,

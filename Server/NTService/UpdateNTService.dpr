@@ -13,9 +13,9 @@ uses
   UpdateServiceIntf in '..\Common\UpdateServiceIntf.pas',
   unPath in '..\..\Common\unPath.pas',
   unWebServiceFileUtils in '..\..\Common\unWebServiceFileUtils.pas',
-  unitDebugService in 'Z:\NTLowLevel100\Source\unitDebugService.pas',
   FileCache in '..\Common\FileCache.pas',
-  hcUpdateConsts in '..\..\Common\hcUpdateConsts.pas';
+  hcUpdateConsts in '..\..\Common\hcUpdateConsts.pas',
+  unitDebugService in '..\..\NTLowLevel100\Source\unitDebugService.pas';
 
 {$R *.RES}
 {$R  UpdateServerEventLogMessages.RES}

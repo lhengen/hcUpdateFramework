@@ -9,7 +9,7 @@ uses
   ,midaslib, FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param, FireDAC.Stan.Error,
   FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf, FireDAC.Stan.Async, FireDAC.DApt,
   FireDAC.UI.Intf, FireDAC.Stan.Def, FireDAC.Stan.Pool, FireDAC.Phys, FireDAC.Phys.FB,
-  FireDAC.Phys.FBDef, FireDAC.VCLUI.Wait, FireDAC.Comp.Client, hcFireDAC, FireDAC.Comp.DataSet,
+  FireDAC.Phys.FBDef, FireDAC.VCLUI.Wait, FireDAC.Comp.Client, FireDAC.Comp.DataSet,
   FireDAC.Moni.Base, FireDAC.Moni.RemoteClient
   ;
 
@@ -17,7 +17,7 @@ uses
 type
   TdtmFireDAC = class(TDataModule)
     qryWorker: TFDQuery;
-    cnDeployment: ThcFireDACConnection;
+    cnDeployment: TFDConnection;
     FDMoniRemoteClientLink1: TFDMoniRemoteClientLink;
     procedure DataModuleCreate(Sender: TObject);
   private

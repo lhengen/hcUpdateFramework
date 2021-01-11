@@ -1,0 +1,73 @@
+package NTLowLevel100;
+
+{$R *.res}
+{$ALIGN 8}
+{$ASSERTIONS ON}
+{$BOOLEVAL OFF}
+{$DEBUGINFO ON}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS ON}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION ON}
+{$OVERFLOWCHECKS OFF}
+{$RANGECHECKS OFF}
+{$REFERENCEINFO ON}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES OFF}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST OFF}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$DESCRIPTION 'Colin Wilson''s NT Specific Low Level Units'}
+{$RUNONLY}
+{$IMPLICITBUILD OFF}
+
+requires
+  rtl,
+  vcl,
+  ResourceUtils100,
+  LowLevel100,
+  vcljpg,
+  ImageTypes100;
+
+contains
+  unitNTException in 'unitNTException.pas',
+  lmalert in 'lmalert.pas',
+  lmat in 'lmat.pas',
+  lmaudit in 'lmaudit.pas',
+  lmbrowsr in 'lmbrowsr.pas',
+  lmchdev in 'lmchdev.pas',
+  lmconfig in 'lmconfig.pas',
+  lmerrlog in 'lmerrlog.pas',
+  lmglobal in 'lmglobal.pas',
+  lmmsg in 'lmmsg.pas',
+  lmremutl in 'lmremutl.pas',
+  lmrepl in 'lmrepl.pas',
+  lmserver in 'lmserver.pas',
+  lmservrw in 'lmservrw.pas',
+  lmsharew in 'lmsharew.pas',
+  lmsname in 'lmsname.pas',
+  lmwksta in 'lmwksta.pas',
+  LsaApi in 'LsaApi.pas',
+  lmaccess in 'lmaccess.pas',
+  unitSecurityDescriptor in 'unitSecurityDescriptor.pas',
+  unitNamedPipes in 'unitNamedPipes.pas',
+  snmp in 'snmp.pas',
+  Mgmtapi in 'Mgmtapi.pas',
+  unitDebugService in 'unitDebugService.pas',
+  unitNTSecurity in 'unitNTSecurity.pas',
+  ntprocess in 'ntprocess.pas',
+  iptypes in 'iptypes.pas',
+  iphlpapi in 'iphlpapi.pas',
+  ipifcons in 'ipifcons.pas',
+  iprtrmib in 'iprtrmib.pas',
+  ipexport in 'ipexport.pas',
+  ntddk in 'ntddk.pas',
+  unitImpersonator in 'unitImpersonator.pas',
+  unitNTRegistry in 'unitNTRegistry.pas';
+
+end.
